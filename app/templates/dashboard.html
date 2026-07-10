@@ -25,8 +25,13 @@
         </div>
         <div class="stat-card">
             <h3>Workouts</h3>
-            <p class="stat-number">0</p>
+            <p class="stat-number">{{ user.workouts|length }}</p>
         </div>
+    </div>
+
+    <div class="quick-actions">
+        <a href="{{ url_for('main.log_workout') }}" class="btn-primary" style="display: inline-block; width: auto;">🏋️ Log Workout</a>
+        <a href="{{ url_for('main.workout_history') }}" class="btn-secondary" style="display: inline-block; width: auto;">📋 History</a>
     </div>
 </div>
 {% endblock %}

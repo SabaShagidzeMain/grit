@@ -8,8 +8,8 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
-    height_cm = db.Column(db.Float)  # Already here ✅
-    goal_weight = db.Column(db.Float)  # Already here ✅
+    height_cm = db.Column(db.Float)
+    goal_weight = db.Column(db.Float)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     def set_password(self, password):
@@ -26,3 +26,30 @@ class WeightLog(db.Model):
     notes = db.Column(db.String(200))
     
     user = db.relationship('User', backref='weight_logs')
+    
+class Exercise(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    muscle_group = db.Column(db.String(50))
+    category = db.Column(db.String(50))
+    description = db.Column(db.String(200))
+
+class Workout(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    date = db.Column(db.DateTime, default=datetime.utcnow)
+    duration_min = db.Column(db.Integer)
+    notes = db.Column(db.String(200))
+    
+    user = db.relationship('User', backref='workouts')
+    sets = db.relationship('WorkoutSet', backref='workout', lazy=True, cascade='all, delete-orphan')
+
+class WorkoutSet(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    workout_id = db.Column(db.Integer, db.ForeignKey('workout.id'), nullable=False)
+    exercise_id = db.Column(db.Integer, db.ForeignKey('exercise.id'), nullable=False)
+    sets = db.Column(db.Integer)
+    reps = db.Column(db.Integer)
+    weight_kg = db.Column(db.Float)
+    
+    exercise = db.relationship('Exercise', backref='workout_sets')

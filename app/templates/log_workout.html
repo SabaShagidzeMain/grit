@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}Log Workout - Grit{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>🏋️ Log Workout</h1>
+        <a href="{{ url_for('main.dashboard') }}" class="btn-secondary">Back to Dashboard</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('main.log_workout') }}" id="workout-form">
+        <!-- Basic Info -->
+        <div class="form-card">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="date">Date</label>
+                    <input type="date" id="date" name="date" value="{{ today }}">
+                </div>
+                <div class="form-group">
+                    <label for="duration_min">Duration (minutes)</label>
+                    <input type="number" id="duration_min" name="duration_min" placeholder="e.g., 45" min="1">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="notes">Notes</label>
+                <textarea id="notes" name="notes" rows="2" placeholder="How did it feel?"></textarea>
+            </div>
+        </div>
+
+        <!-- Exercises -->
+        <div class="form-card">
+            <h2>Exercises</h2>
+            <div id="exercise-container">
+                <!-- Exercise 1 -->
+                <div class="exercise-row">
+                    <div class="exercise-inputs">
+                        <div class="form-group" style="flex: 2;">
+                            <label>Exercise</label>
+                            <input type="text" name="exercise_name[]" class="exercise-search" placeholder="Search exercise..." autocomplete="off">
+                            <div class="suggestions"></div>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>Sets</label>
+                            <input type="number" name="sets[]" placeholder="3" min="1">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>Reps</label>
+                            <input type="number" name="reps[]" placeholder="10" min="1">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>Weight (kg)</label>
+                            <input type="number" name="weight[]" step="0.5" placeholder="60" min="0">
+                        </div>
+                        <button type="button" class="btn-remove" onclick="removeExercise(this)">✕</button>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="button" class="btn-add-exercise" onclick="addExercise()">+ Add Exercise</button>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn-primary btn-submit">Log Workout 💪</button>
+    </form>
+</div>
+
+<script>
+// Exercise search with suggestions and images
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.exercise-search').forEach(input => {
+        setupSearch(input);
+    });
+});
+
+function setupSearch(input) {
+    const suggestions = input.parentElement.querySelector('.suggestions');
+    let timeoutId;
+
+    input.addEventListener('input', function() {
+        clearTimeout(timeoutId);
+        const query = this.value.trim();
+        
+        if (query.length < 2) {
+            suggestions.style.display = 'none';
+            return;
+        }
+
+        timeoutId = setTimeout(() => {
+            fetch(`/api/exercises/search?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        suggestions.innerHTML = data.map(ex => {
+                            // Build image HTML if thumbnail exists
+                            let imgHtml = '';
+                            if (ex.thumbnail) {
+                                imgHtml = `<img src="${ex.thumbnail}" alt="${ex.name}" class="suggestion-img">`;
+                            }
+                            // Use data attribute instead of inline onclick
+                            return `<div class="suggestion-item" data-name="${ex.name}">
+                                ${imgHtml}
+                                <span>${ex.name}</span>
+                            </div>`;
+                        }).join('');
+                        suggestions.style.display = 'block';
+                        
+                        // Add click event listeners to suggestion items
+                        suggestions.querySelectorAll('.suggestion-item').forEach(item => {
+                            item.addEventListener('click', function(e) {
+                                const name = this.dataset.name;
+                                selectExercise(input, name);
+                            });
+                        });
+                    } else {
+                        suggestions.innerHTML = '<div class="suggestion-item" style="color: #666;">No exercises found</div>';
+                        suggestions.style.display = 'block';
+                    }
+                })
+                .catch(() => {
+                    suggestions.innerHTML = '<div class="suggestion-item" style="color: red;">Error searching</div>';
+                    suggestions.style.display = 'block';
+                });
+        }, 300);
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!input.parentElement.contains(e.target)) {
+            suggestions.style.display = 'none';
+        }
+    });
+}
+
+function selectExercise(input, name) {
+    input.value = name;
+    const suggestions = input.parentElement.querySelector('.suggestions');
+    suggestions.style.display = 'none';
+}
+
+function addExercise() {
+    const container = document.getElementById('exercise-container');
+    const template = container.querySelector('.exercise-row').cloneNode(true);
+    template.querySelectorAll('input').forEach(input => input.value = '');
+    template.querySelector('.suggestions').innerHTML = '';
+    template.querySelector('.suggestions').style.display = 'none';
+    
+    container.appendChild(template);
+    setupSearch(template.querySelector('.exercise-search'));
+}
+
+function removeExercise(btn) {
+    const rows = document.querySelectorAll('.exercise-row');
+    if (rows.length > 1) {
+        btn.closest('.exercise-row').remove();
+    } else {
+        alert('You need at least one exercise!');
+    }
+}
+</script>
+{% endblock %}

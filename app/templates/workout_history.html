@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Workout History - Grit{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>📋 Workout History</h1>
+        <div>
+            <a href="{{ url_for('main.log_workout') }}" class="btn-primary" style="display: inline-block; width: auto;">+ Log Workout</a>
+            <a href="{{ url_for('main.dashboard') }}" class="btn-secondary">Back</a>
+        </div>
+    </div>
+
+    {% if workouts %}
+        {% for workout in workouts %}
+        <div class="workout-card">
+            <div class="workout-header">
+                <div>
+                    <h3>{{ workout.date.strftime('%B %d, %Y') }}</h3>
+                    <p class="workout-meta">Duration: {{ workout.duration_min }} min | {{ workout.sets|length }} exercises</p>
+                    {% if workout.notes %}
+                        <p class="workout-notes">📝 {{ workout.notes }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="workout-exercises">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Exercise</th>
+                            <th>Sets</th>
+                            <th>Reps</th>
+                            <th>Weight</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for set in workout.sets %}
+                        <tr>
+                            <td><strong>{{ set.exercise.name }}</strong></td>
+                            <td>{{ set.sets }}</td>
+                            <td>{{ set.reps }}</td>
+                            <td>{{ set.weight_kg }} kg</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <p style="font-size: 1.5rem; margin-bottom: 1rem;">No workouts logged yet!</p>
+            <a href="{{ url_for('main.log_workout') }}" class="btn-primary" style="display: inline-block; width: auto;">Log Your First Workout 💪</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
