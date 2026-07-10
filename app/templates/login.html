@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Grit{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-box">
+        <h1>💪 Grit</h1>
+        <p class="subtitle">Log in to your fitness journey</p>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <form method="POST" action="{{ url_for('main.login') }}">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <button type="submit" class="btn-primary">Log In</button>
+        </form>
+        
+        <p class="auth-link">
+            Don't have an account? <a href="{{ url_for('main.register') }}">Register here</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

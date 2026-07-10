@@ -7,12 +7,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <nav>
-        <h1>💪 Grit</h1>
-    </nav>
-    
     {% block content %}{% endblock %}
-    
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>

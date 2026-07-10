@@ -3,8 +3,14 @@
 {% block title %}Dashboard - Grit{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h2>Dashboard</h2>
-    <p>Welcome to your dashboard!</p>
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>Welcome, {{ user.username }}! 👋</h1>
+        <a href="{{ url_for('main.logout') }}" class="btn-logout">Logout</a>
+    </div>
+    
+    <div class="dashboard-content">
+        <p>Your fitness dashboard is ready!</p>
+    </div>
 </div>
 {% endblock %}
