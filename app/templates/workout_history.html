@@ -23,6 +23,14 @@
                         <p class="workout-notes">📝 {{ workout.notes }}</p>
                     {% endif %}
                 </div>
+                <!-- DELETE BUTTON -->
+                <form method="POST" action="{{ url_for('main.delete_workout', workout_id=workout.id) }}" onsubmit="return confirm('Delete this workout? This cannot be undone.');">
+                    <button type="submit" style="background: none; border: 1px solid #fca5a5; border-radius: 6px; cursor: pointer; color: #dc2626; font-size: 0.8rem; padding: 0.3rem 0.8rem; transition: all 0.2s; font-weight: 500;" 
+                            onmouseover="this.style.backgroundColor='#fef2f2'; this.style.borderColor='#ef4444';" 
+                            onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='#fca5a5';">
+                        🗑️ Delete
+                    </button>
+                </form>
             </div>
             
             <div class="workout-exercises">
@@ -56,4 +64,5 @@
         </div>
     {% endif %}
 </div>
+
 {% endblock %}

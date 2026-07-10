@@ -31,7 +31,7 @@
                             <th style="text-align: left; padding: 0.75rem 0.5rem; color: #94a3b8; font-weight: 600; font-size: 0.8rem; text-transform: uppercase;">Date</th>
                             <th style="text-align: left; padding: 0.75rem 0.5rem; color: #94a3b8; font-weight: 600; font-size: 0.8rem; text-transform: uppercase;">Weight</th>
                             <th style="text-align: left; padding: 0.75rem 0.5rem; color: #94a3b8; font-weight: 600; font-size: 0.8rem; text-transform: uppercase;">Notes</th>
-                            <th style="text-align: center; padding: 0.75rem 0.5rem; color: #94a3b8; font-weight: 600; font-size: 0.8rem; text-transform: uppercase;">Actions</th>
+                            <th style="text-align: center; padding: 0.75rem 0.5rem; color: #94a3b8; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; width: 80px;">Delete</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -41,11 +41,11 @@
                             <td style="padding: 0.6rem 0.5rem; font-weight: 600; color: #dc2626;">{{ log.weight_kg }} kg</td>
                             <td style="padding: 0.6rem 0.5rem; color: #475569;">{{ log.notes or '—' }}</td>
                             <td style="padding: 0.6rem 0.5rem; text-align: center;">
-                                <form method="POST" action="{{ url_for('main.delete_weight', log_id=log.id) }}" style="display: inline;" onsubmit="return confirm('Delete this weight entry?');">
-                                    <button type="submit" class="btn-delete" style="background: none; border: none; cursor: pointer; color: #ef4444; font-size: 1rem; padding: 0.25rem 0.5rem; border-radius: 4px; transition: background 0.2s;" 
-                                            onmouseover="this.style.backgroundColor='#fef2f2'" 
-                                            onmouseout="this.style.backgroundColor='transparent'">
-                                        🗑️
+                                <form method="POST" action="{{ url_for('main.delete_weight', log_id=log.id) }}" style="display: inline;" onsubmit="return confirm('Delete this weight entry? This cannot be undone.');">
+                                    <button type="submit" class="btn-delete" style="background: none; border: 1px solid #fca5a5; border-radius: 6px; cursor: pointer; color: #dc2626; font-size: 0.85rem; padding: 0.3rem 0.8rem; transition: all 0.2s; font-weight: 500;" 
+                                            onmouseover="this.style.backgroundColor='#fef2f2'; this.style.borderColor='#ef4444';" 
+                                            onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='#fca5a5';">
+                                        🗑️ Delete
                                     </button>
                                 </form>
                             </td>

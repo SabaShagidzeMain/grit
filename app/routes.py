@@ -520,3 +520,37 @@ def delete_weight(log_id):
     db.session.commit()
     flash('Weight entry deleted', 'info')
     return redirect(url_for('main.weight_history'))
+
+@bp.route('/workout-set/<int:set_id>/delete', methods=['POST'])
+@login_required
+def delete_workout_set(set_id):
+    """Delete a single exercise set from a workout"""
+    workout_set = WorkoutSet.query.get(set_id)
+    if not workout_set:
+        flash('Set not found', 'danger')
+        return redirect(url_for('main.workout_history'))
+    
+    # Check if the workout belongs to the current user
+    workout = Workout.query.get(workout_set.workout_id)
+    if not workout or workout.user_id != current_user.id:
+        flash('Unauthorized', 'danger')
+        return redirect(url_for('main.workout_history'))
+    
+    db.session.delete(workout_set)
+    db.session.commit()
+    flash('Exercise set deleted', 'info')
+    return redirect(url_for('main.workout_history'))
+
+@bp.route('/workout/<int:workout_id>/delete', methods=['POST'])
+@login_required
+def delete_workout(workout_id):
+    """Delete a workout and all its sets"""
+    workout = Workout.query.filter_by(id=workout_id, user_id=current_user.id).first_or_404()
+    
+    # Delete all workout sets first (cascade should handle this, but just in case)
+    WorkoutSet.query.filter_by(workout_id=workout.id).delete()
+    db.session.delete(workout)
+    db.session.commit()
+    
+    flash('Workout deleted successfully', 'info')
+    return redirect(url_for('main.workout_history'))
