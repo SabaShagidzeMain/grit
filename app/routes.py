@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db, login_manager
 from app.models import User, WeightLog, Exercise, Workout, WorkoutSet, WorkoutPlan, PlanExercise
-from datetime import datetime
+from datetime import datetime, timedelta
 import requests
 
 bp = Blueprint('main', __name__)
@@ -157,7 +157,48 @@ def setup():
 def dashboard():
     if not user_has_setup(current_user):
         return redirect(url_for('main.setup'))
-    return render_template('dashboard.html', user=current_user)
+    
+    # Get latest weight
+    latest_weight = WeightLog.query.filter_by(user_id=current_user.id).order_by(WeightLog.date.desc()).first()
+    
+    # Calculate streak
+    streak = 0
+    if current_user.workouts:
+        check_date = datetime.now().date()
+        while True:
+            day_workouts = Workout.query.filter(
+                Workout.user_id == current_user.id,
+                db.func.date(Workout.date) == check_date
+            ).count()
+            if day_workouts > 0:
+                streak += 1
+                check_date -= timedelta(days=1)
+            else:
+                break
+    
+    # Calculate BMI
+    bmi = None
+    bmi_interpretation = None
+    if latest_weight and current_user.height_cm:
+        height_m = current_user.height_cm / 100
+        bmi = latest_weight.weight_kg / (height_m ** 2)
+        
+        if bmi < 18.5:
+            bmi_interpretation = "Underweight"
+        elif bmi < 25:
+            bmi_interpretation = "Normal"
+        elif bmi < 30:
+            bmi_interpretation = "Overweight"
+        else:
+            bmi_interpretation = "Obese"
+    
+    return render_template('dashboard.html', 
+        user=current_user,
+        latest_weight=latest_weight,
+        streak=streak,
+        bmi=bmi,
+        bmi_interpretation=bmi_interpretation
+    )
 
 
 # ============================================

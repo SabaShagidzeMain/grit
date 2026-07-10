@@ -9,14 +9,6 @@
         <a href="{{ url_for('main.dashboard') }}" class="btn-secondary">Back to Dashboard</a>
     </div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="flash flash-{{ category }}">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-
     <!-- Select Plan -->
     <div class="form-card">
         <h2>Select Workout Plan</h2>
@@ -253,4 +245,4 @@ function flash(message, category) {
     box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.06);
 }
 </style>
-{% endblock %}
+{% endblock %}  

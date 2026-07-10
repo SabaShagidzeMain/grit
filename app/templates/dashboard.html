@@ -1,132 +1,215 @@
-{% extends "base.html" %}
-
-{% block title %}Dashboard - Grit{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Dashboard - Grit{% endblock %} {%
+block content %}
 <div class="dashboard-container">
-    <div class="dashboard-header">
-        <h1>👋 Welcome back, <span>{{ user.username }}</span></h1>
-        <div class="dashboard-actions">
-            <a href="{{ url_for('main.logout') }}" class="btn-logout">Logout</a>
-        </div>
+  <div class="dashboard-header">
+    <h1>👋 Welcome back, <span>{{ user.username }}</span></h1>
+    <div class="dashboard-actions">
+      <a href="{{ url_for('main.logout') }}" class="btn-logout">Logout</a>
     </div>
+  </div>
 
-    <!-- Stats Grid -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <h3>Height</h3>
-            <p class="stat-number">{{ user.height_cm if user.height_cm else '—' }} cm</p>
-        </div>
-        <div class="stat-card">
-            <h3>Goal Weight</h3>
-            <p class="stat-number">{{ user.goal_weight if user.goal_weight else '—' }} kg</p>
-        </div>
-        <div class="stat-card">
-            <h3>Current Weight</h3>
-            {% set latest_weight = user.weight_logs|sort(attribute='date', reverse=true)|first %}
-            <p class="stat-number accent">{{ latest_weight.weight_kg if latest_weight else '—' }} kg</p>
-        </div>
-        <div class="stat-card">
-            <h3>Workouts</h3>
-            <p class="stat-number accent">{{ user.workouts|length }}</p>
-        </div>
+  <!-- Stats Grid - 6 cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <h3>Height</h3>
+      <p class="stat-number">
+        {{ user.height_cm if user.height_cm else '—' }} cm
+      </p>
     </div>
+    <div class="stat-card">
+      <h3>Goal Weight</h3>
+      <p class="stat-number">
+        {{ user.goal_weight if user.goal_weight else '—' }} kg
+      </p>
+    </div>
+    <div class="stat-card">
+      <h3>Current Weight</h3>
+      <p class="stat-number accent">
+        {{ latest_weight.weight_kg if latest_weight else '—' }} kg
+      </p>
+    </div>
+    <div class="stat-card">
+      <h3>Workouts</h3>
+      <p class="stat-number accent">{{ user.workouts|length }}</p>
+    </div>
+    <div class="stat-card">
+      <h3>🔥 Streak</h3>
+      <p class="stat-number accent">{{ streak }} days</p>
+    </div>
+    <div class="stat-card">
+      <h3>BMI</h3>
+      {% if bmi %}
+      <p class="stat-number accent">{{ "%.1f"|format(bmi) }}</p>
+      <p
+        style="
+          font-size: 0.75rem;
+          color: var(--text-muted);
+          margin-top: 0.25rem;
+        "
+      >
+        {{ bmi_interpretation }}
+      </p>
+      {% else %}
+      <p class="stat-number" style="font-size: 1.2rem">—</p>
+      <p
+        style="
+          font-size: 0.75rem;
+          color: var(--text-muted);
+          margin-top: 0.25rem;
+        "
+      >
+        Log weight to calculate
+      </p>
+      {% endif %}
+    </div>
+  </div>
 
-    <!-- Two Column Layout: Recent Workouts + Weight Chart -->
-    <div class="dashboard-two-col">
-        <!-- Left: Recent Workouts (Fixed Height + Scrollable) -->
-        <div class="recent-workouts">
-            <div class="section-header">
-                <h2>🏋️ Recent Workouts</h2>
-                {% if user.workouts|length > 0 %}
-                <a href="{{ url_for('main.workout_history') }}" class="btn-secondary" style="font-size: 0.8rem;">View All →</a>
-                {% endif %}
+  <!-- Two Column Layout: Recent Workouts + Weight Chart -->
+  <div class="dashboard-two-col">
+    <!-- Left: Recent Workouts -->
+    <div class="recent-workouts">
+      <div class="section-header">
+        <h2>🏋️ Recent Workouts</h2>
+        {% if user.workouts|length > 0 %}
+        <a
+          href="{{ url_for('main.workout_history') }}"
+          class="btn-secondary"
+          style="font-size: 0.8rem"
+          >View All →</a
+        >
+        {% endif %}
+      </div>
+
+      <div class="workout-scroll-container">
+        {% if user.workouts|length > 0 %} {% set recent_workouts =
+        user.workouts|sort(attribute='date', reverse=true) %}
+        <div class="workout-list">
+          {% for workout in recent_workouts[:3] %}
+          <div class="workout-card-mini">
+            <div class="workout-card-header">
+              <span class="workout-date"
+                >{{ workout.date.strftime('%b %d, %Y') }}</span
+              >
+              <span class="workout-duration"
+                >{{ workout.duration_min or 0 }} min</span
+              >
             </div>
-
-            <div class="workout-scroll-container">
-                {% if user.workouts|length > 0 %}
-                    {% set recent_workouts = user.workouts|sort(attribute='date', reverse=true) %}
-                    <div class="workout-list">
-                        {% for workout in recent_workouts[:3] %}
-                        <div class="workout-card-mini">
-                            <div class="workout-card-header">
-                                <span class="workout-date">{{ workout.date.strftime('%b %d, %Y') }}</span>
-                                <span class="workout-duration">{{ workout.duration_min or 0 }} min</span>
-                            </div>
-                            <div class="workout-exercise-list">
-                                {% for set in workout.sets[:3] %}
-                                <span class="exercise-tag">{{ set.exercise.name }}</span>
-                                {% endfor %}
-                                {% if workout.sets|length > 3 %}
-                                <span class="exercise-tag more">+{{ workout.sets|length - 3 }} more</span>
-                                {% endif %}
-                            </div>
-                            {% if workout.notes %}
-                            <p class="workout-mini-notes">{{ workout.notes[:50] }}{% if workout.notes|length > 50 %}...{% endif %}</p>
-                            {% endif %}
-                        </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="empty-state-compact">
-                        <span class="empty-icon">🏋️</span>
-                        <p>No workouts yet</p>
-                        <a href="{{ url_for('main.log_workout') }}" class="btn-primary" style="width: auto; display: inline-block; font-size: 0.8rem; padding: 0.4rem 1rem;">Log One</a>
-                    </div>
-                {% endif %}
+            <div class="workout-exercise-list">
+              {% for set in workout.sets[:3] %}
+              <span class="exercise-tag">{{ set.exercise.name }}</span>
+              {% endfor %} {% if workout.sets|length > 3 %}
+              <span class="exercise-tag more"
+                >+{{ workout.sets|length - 3 }} more</span
+              >
+              {% endif %}
             </div>
-        </div>
-
-        <!-- Right: Weight Chart -->
-        <div class="weight-chart-card">
-            <div class="section-header">
-                <h2>📈 Weight Progress</h2>
-                {% if user.weight_logs|length > 0 %}
-                <a href="{{ url_for('main.weight_history') }}" class="btn-secondary" style="font-size: 0.8rem;">View All →</a>
-                {% endif %}
-            </div>
-
-            {% if user.weight_logs|length > 1 %}
-                <div class="chart-wrapper">
-                    <canvas id="weightChart"></canvas>
-                </div>
-                <div class="chart-stats">
-                    <div class="chart-stat">
-                        <span class="chart-stat-label">Start</span>
-                        {% set first = user.weight_logs|sort(attribute='date')|first %}
-                        <span class="chart-stat-value">{{ first.weight_kg }} kg</span>
-                    </div>
-                    <div class="chart-stat">
-                        <span class="chart-stat-label">Current</span>
-                        {% set last = user.weight_logs|sort(attribute='date', reverse=true)|first %}
-                        <span class="chart-stat-value">{{ last.weight_kg }} kg</span>
-                    </div>
-                    <div class="chart-stat">
-                        <span class="chart-stat-label">Change</span>
-                        {% set first = user.weight_logs|sort(attribute='date')|first %}
-                        {% set last = user.weight_logs|sort(attribute='date', reverse=true)|first %}
-                        {% set diff = (last.weight_kg - first.weight_kg)|round(1) %}
-                        <span class="chart-stat-value {% if diff < 0 %}trend-down{% elif diff > 0 %}trend-up{% else %}trend-stable{% endif %}">
-                            {% if diff < 0 %}↓{% elif diff > 0 %}↑{% else %}→{% endif %}
-                            {{ diff|abs }} kg
-                        </span>
-                    </div>
-                </div>
-            {% elif user.weight_logs|length == 1 %}
-                <div class="empty-state-compact" style="padding: 2rem 0.5rem;">
-                    <span class="empty-icon">📊</span>
-                    <p>Log more weights to see your progress chart</p>
-                    <a href="{{ url_for('main.log_weight') }}" class="btn-primary" style="width: auto; display: inline-block; font-size: 0.8rem; padding: 0.4rem 1rem;">Log Weight</a>
-                </div>
-            {% else %}
-                <div class="empty-state-compact" style="padding: 2rem 0.5rem;">
-                    <span class="empty-icon">⚖️</span>
-                    <p>No weights logged yet</p>
-                    <a href="{{ url_for('main.log_weight') }}" class="btn-primary" style="width: auto; display: inline-block; font-size: 0.8rem; padding: 0.4rem 1rem;">Log One</a>
-                </div>
+            {% if workout.notes %}
+            <p class="workout-mini-notes">
+              {{ workout.notes[:50] }}{% if workout.notes|length > 50 %}...{%
+              endif %}
+            </p>
             {% endif %}
+          </div>
+          {% endfor %}
         </div>
+        {% else %}
+        <div class="empty-state-compact">
+          <span class="empty-icon">🏋️</span>
+          <p>No workouts yet</p>
+          <a
+            href="{{ url_for('main.log_workout') }}"
+            class="btn-primary"
+            style="
+              width: auto;
+              display: inline-block;
+              font-size: 0.8rem;
+              padding: 0.4rem 1rem;
+            "
+            >Log One</a
+          >
+        </div>
+        {% endif %}
+      </div>
     </div>
+
+    <!-- Right: Weight Chart -->
+    <div class="weight-chart-card">
+      <div class="section-header">
+        <h2>📈 Weight Progress</h2>
+        {% if user.weight_logs|length > 0 %}
+        <a
+          href="{{ url_for('main.weight_history') }}"
+          class="btn-secondary"
+          style="font-size: 0.8rem"
+          >View All →</a
+        >
+        {% endif %}
+      </div>
+
+      {% if user.weight_logs|length > 1 %}
+      <div class="chart-wrapper">
+        <canvas id="weightChart"></canvas>
+      </div>
+      <div class="chart-stats">
+        <div class="chart-stat">
+          <span class="chart-stat-label">Start</span>
+          {% set first = user.weight_logs|sort(attribute='date')|first %}
+          <span class="chart-stat-value">{{ first.weight_kg }} kg</span>
+        </div>
+        <div class="chart-stat">
+          <span class="chart-stat-label">Current</span>
+          {% set last = user.weight_logs|sort(attribute='date',
+          reverse=true)|first %}
+          <span class="chart-stat-value">{{ last.weight_kg }} kg</span>
+        </div>
+        <div class="chart-stat">
+          <span class="chart-stat-label">Change</span>
+          {% set first = user.weight_logs|sort(attribute='date')|first %} {% set
+          last = user.weight_logs|sort(attribute='date', reverse=true)|first %}
+          {% set diff = (last.weight_kg - first.weight_kg)|round(1) %}
+          <span
+            class="chart-stat-value {% if diff < 0 %}trend-down{% elif diff > 0 %}trend-up{% else %}trend-stable{% endif %}"
+          >
+            {% if diff < 0 %}↓{% elif diff > 0 %}↑{% else %}→{% endif %} {{
+            diff|abs }} kg
+          </span>
+        </div>
+      </div>
+      {% elif user.weight_logs|length == 1 %}
+      <div class="empty-state-compact" style="padding: 2rem 0.5rem">
+        <span class="empty-icon">📊</span>
+        <p>Log more weights to see your progress chart</p>
+        <a
+          href="{{ url_for('main.log_weight') }}"
+          class="btn-primary"
+          style="
+            width: auto;
+            display: inline-block;
+            font-size: 0.8rem;
+            padding: 0.4rem 1rem;
+          "
+          >Log Weight</a
+        >
+      </div>
+      {% else %}
+      <div class="empty-state-compact" style="padding: 2rem 0.5rem">
+        <span class="empty-icon">⚖️</span>
+        <p>No weights logged yet</p>
+        <a
+          href="{{ url_for('main.log_weight') }}"
+          class="btn-primary"
+          style="
+            width: auto;
+            display: inline-block;
+            font-size: 0.8rem;
+            padding: 0.4rem 1rem;
+          "
+          >Log One</a
+        >
+      </div>
+      {% endif %}
+    </div>
+  </div>
 </div>
 
 <!-- Chart.js -->
@@ -134,100 +217,105 @@
 
 {% if user.weight_logs|length > 1 %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    fetch('/api/weight-data')
-        .then(response => response.json())
-        .then(data => {
-            const ctx = document.getElementById('weightChart').getContext('2d');
-            
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: data.dates,
-                    datasets: [{
-                        label: 'Weight',
-                        data: data.weights,
-                        borderColor: '#dc2626',
-                        borderWidth: 2.5,
-                        backgroundColor: function(context) {
-                            const chart = context.chart;
-                            const {ctx, chartArea} = chart;
-                            if (!chartArea) return null;
-                            const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-                            gradient.addColorStop(0, 'rgba(220, 38, 38, 0.25)');
-                            gradient.addColorStop(0.7, 'rgba(220, 38, 38, 0.05)');
-                            gradient.addColorStop(1, 'rgba(220, 38, 38, 0)');
-                            return gradient;
-                        },
-                        fill: true,
-                        tension: 0.4,
-                        pointBackgroundColor: '#dc2626',
-                        pointBorderColor: '#ffffff',
-                        pointBorderWidth: 2,
-                        pointRadius: 3.5,
-                        pointHoverRadius: 6,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: 'white',
-                            titleColor: '#0f172a',
-                            bodyColor: '#475569',
-                            borderColor: '#e2e8f0',
-                            borderWidth: 1,
-                            cornerRadius: 8,
-                            padding: 8,
-                            callbacks: {
-                                label: function(context) {
-                                    return context.parsed.y + ' kg';
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: false,
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.05)'
-                            },
-                            ticks: {
-                                callback: function(value) {
-                                    return value + ' kg';
-                                },
-                                font: {
-                                    size: 10
-                                }
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                maxTicksLimit: 8,
-                                maxRotation: 30,
-                                minRotation: 0,
-                                font: {
-                                    size: 10
-                                }
-                            }
-                        }
-                    },
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
-                    }
-                }
-            });
-        });
-});
-</script>
-{% endif %}
+  document.addEventListener("DOMContentLoaded", function () {
+    fetch("/api/weight-data")
+      .then((response) => response.json())
+      .then((data) => {
+        const ctx = document.getElementById("weightChart").getContext("2d");
 
-{% endblock %}
+        new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: data.dates,
+            datasets: [
+              {
+                label: "Weight",
+                data: data.weights,
+                borderColor: "#dc2626",
+                borderWidth: 2.5,
+                backgroundColor: function (context) {
+                  const chart = context.chart;
+                  const { ctx, chartArea } = chart;
+                  if (!chartArea) return null;
+                  const gradient = ctx.createLinearGradient(
+                    0,
+                    chartArea.top,
+                    0,
+                    chartArea.bottom,
+                  );
+                  gradient.addColorStop(0, "rgba(220, 38, 38, 0.25)");
+                  gradient.addColorStop(0.7, "rgba(220, 38, 38, 0.05)");
+                  gradient.addColorStop(1, "rgba(220, 38, 38, 0)");
+                  return gradient;
+                },
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: "#dc2626",
+                pointBorderColor: "#ffffff",
+                pointBorderWidth: 2,
+                pointRadius: 3.5,
+                pointHoverRadius: 6,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false,
+              },
+              tooltip: {
+                backgroundColor: "white",
+                titleColor: "#0f172a",
+                bodyColor: "#475569",
+                borderColor: "#e2e8f0",
+                borderWidth: 1,
+                cornerRadius: 8,
+                padding: 8,
+                callbacks: {
+                  label: function (context) {
+                    return context.parsed.y + " kg";
+                  },
+                },
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: false,
+                grid: {
+                  color: "rgba(0, 0, 0, 0.05)",
+                },
+                ticks: {
+                  callback: function (value) {
+                    return value + " kg";
+                  },
+                  font: {
+                    size: 10,
+                  },
+                },
+              },
+              x: {
+                grid: {
+                  display: false,
+                },
+                ticks: {
+                  maxTicksLimit: 8,
+                  maxRotation: 30,
+                  minRotation: 0,
+                  font: {
+                    size: 10,
+                  },
+                },
+              },
+            },
+            interaction: {
+              intersect: false,
+              mode: "index",
+            },
+          },
+        });
+      });
+  });
+</script>
+{% endif %} {% endblock %}
