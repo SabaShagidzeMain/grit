@@ -1,0 +1,71 @@
+/* ===== EXERCISE ROWS ===== */
+.exercise-row {
+    background: var(--bg-body);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.75rem;
+    transition: var(--transition);
+}
+
+.exercise-row:hover {
+    border-color: var(--text-muted);
+}
+
+.exercise-inputs {
+    display: flex;
+    gap: 0.75rem;
+    align-items: end;
+    flex-wrap: wrap;
+}
+
+.exercise-inputs .form-group {
+    margin-bottom: 0;
+    position: relative;
+    flex: 1;
+}
+
+/* ===== SUGGESTIONS ===== */
+.suggestions {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    max-height: 220px;
+    overflow-y: auto;
+    z-index: 10;
+    box-shadow: var(--shadow-lg);
+}
+
+.suggestion-item {
+    display: flex;
+    align-items: center;
+    padding: 0.6rem 0.9rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    gap: 10px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    transition: var(--transition);
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item:hover {
+    background: var(--bg-hover);
+}
+
+.suggestion-img {
+    width: 28px;
+    height: 28px;
+    object-fit: cover;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--bg-body);
+}

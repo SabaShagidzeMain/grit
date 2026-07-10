@@ -1,0 +1,105 @@
+/* ===== WORKOUT HISTORY ===== */
+.workout-card {
+    background: var(--bg-card);
+    padding: 1.25rem 1.5rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1rem;
+    transition: var(--transition);
+}
+
+.workout-card:hover {
+    border-color: var(--text-muted);
+    box-shadow: var(--shadow);
+}
+
+.workout-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+}
+
+.workout-header h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.workout-meta {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.workout-notes {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+    font-style: italic;
+}
+
+.workout-exercises {
+    margin-top: 0.75rem;
+    border-top: 1px solid var(--border);
+    padding-top: 0.75rem;
+}
+
+.workout-exercises table {
+    width: 100%;
+    font-size: 0.875rem;
+    border-collapse: collapse;
+}
+
+.workout-exercises th {
+    text-align: left;
+    color: var(--text-muted);
+    font-weight: 600;
+    padding: 0.4rem 0.25rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.workout-exercises td {
+    padding: 0.4rem 0.25rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+}
+
+.workout-exercises td:first-child {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.workout-exercises tr:last-child td {
+    border-bottom: none;
+}
+
+/* ===== EMPTY STATE ===== */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+}
+
+.empty-state .icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.empty-state h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}

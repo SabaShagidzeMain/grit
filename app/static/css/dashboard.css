@@ -1,0 +1,102 @@
+/* ===== DASHBOARD ===== */
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.5rem 2rem;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0 1.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2rem;
+}
+
+.dashboard-header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+}
+
+.dashboard-header h1 span {
+    color: var(--accent);
+}
+
+.dashboard-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+/* ===== STATS GRID ===== */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-card {
+    background: var(--bg-card);
+    padding: 1.25rem 1.5rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.stat-card:hover {
+    border-color: var(--accent);
+    box-shadow: var(--shadow);
+}
+
+.stat-card h3 {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
+}
+
+.stat-number.accent {
+    color: var(--accent);
+}
+
+/* ===== QUICK ACTIONS ===== */
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.quick-actions .btn-action {
+    padding: 0.75rem;
+    text-align: center;
+    border-radius: var(--radius);
+    border: 1.5px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: var(--transition);
+    font-weight: 500;
+    font-size: 0.85rem;
+}
+
+.quick-actions .btn-action:hover {
+    background: var(--bg-hover);
+    transform: translateY(-2px);
+    border-color: var(--accent);
+    box-shadow: var(--shadow);
+}
