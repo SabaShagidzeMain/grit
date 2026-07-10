@@ -285,6 +285,59 @@ def search_exercises():
     except Exception as e:
         print(f"Exercise search error: {str(e)}")
         return jsonify([])
+    
+@bp.route('/log-weight', methods=['GET', 'POST'])
+@login_required
+def log_weight():
+    if request.method == 'POST':
+        weight = request.form.get('weight')
+        notes = request.form.get('notes', '')
+        
+        if not weight:
+            flash('Please enter a weight', 'danger')
+            return render_template('log_weight.html')
+        
+        try:
+            weight = float(weight)
+            if weight <= 0:
+                flash('Please enter a valid weight', 'danger')
+                return render_template('log_weight.html')
+            
+            weight_log = WeightLog(
+                user_id=current_user.id,
+                weight_kg=weight,
+                notes=notes
+            )
+            db.session.add(weight_log)
+            db.session.commit()
+            
+            flash('Weight logged successfully! ⚖️', 'success')
+            return redirect(url_for('main.weight_history'))
+            
+        except ValueError:
+            flash('Please enter a valid number', 'danger')
+            return render_template('log_weight.html')
+    
+    return render_template('log_weight.html')
+
+@bp.route('/weight-history')
+@login_required
+def weight_history():
+    logs = WeightLog.query.filter_by(user_id=current_user.id).order_by(WeightLog.date.asc()).all()
+    return render_template('weight_history.html', logs=logs)
+
+@bp.route('/api/weight-data')
+@login_required
+def weight_data():
+    """Return weight data as JSON for charts"""
+    logs = WeightLog.query.filter_by(user_id=current_user.id).order_by(WeightLog.date.asc()).all()
+    
+    data = {
+        'dates': [log.date.strftime('%Y-%m-%d') for log in logs],
+        'weights': [log.weight_kg for log in logs],
+        'goal': current_user.goal_weight
+    }
+    return jsonify(data)
 
 @bp.route('/logout')
 @login_required

@@ -1,37 +1,63 @@
-{% extends "base.html" %}
-
-{% block title %}Dashboard - Grit{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Dashboard - Grit{% endblock %} {%
+block content %}
 <div class="dashboard-container">
-    <div class="dashboard-header">
-        <h1>Welcome, {{ user.username }}! 👋</h1>
-        <a href="{{ url_for('main.logout') }}" class="btn-logout">Logout</a>
+  <div class="dashboard-header">
+    <h1>👋 Welcome back, <span>{{ user.username }}</span></h1>
+    <div class="dashboard-actions">
+      <a href="{{ url_for('main.workout_history') }}" class="btn-secondary"
+        >📋 History</a
+      >
+      <a href="{{ url_for('main.logout') }}" class="btn-logout">Logout</a>
     </div>
-    
-    <div class="stats-grid">
-        <div class="stat-card">
-            <h3>Height</h3>
-            <p class="stat-number">{{ user.height_cm if user.height_cm else 'Not set' }} cm</p>
-        </div>
-        <div class="stat-card">
-            <h3>Goal Weight</h3>
-            <p class="stat-number">{{ user.goal_weight if user.goal_weight else 'Not set' }} kg</p>
-        </div>
-        <div class="stat-card">
-            <h3>Current Weight</h3>
-            {% set latest_weight = user.weight_logs|sort(attribute='date', reverse=true)|first %}
-            <p class="stat-number">{{ latest_weight.weight_kg if latest_weight else 'Not logged' }} kg</p>
-        </div>
-        <div class="stat-card">
-            <h3>Workouts</h3>
-            <p class="stat-number">{{ user.workouts|length }}</p>
-        </div>
-    </div>
+  </div>
 
-    <div class="quick-actions">
-        <a href="{{ url_for('main.log_workout') }}" class="btn-primary" style="display: inline-block; width: auto;">🏋️ Log Workout</a>
-        <a href="{{ url_for('main.workout_history') }}" class="btn-secondary" style="display: inline-block; width: auto;">📋 History</a>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <h3>Height</h3>
+      <p class="stat-number">
+        {{ user.height_cm if user.height_cm else '—' }} cm
+      </p>
     </div>
+    <div class="stat-card">
+      <h3>Goal Weight</h3>
+      <p class="stat-number">
+        {{ user.goal_weight if user.goal_weight else '—' }} kg
+      </p>
+    </div>
+    <div class="stat-card">
+      <h3>Current Weight</h3>
+      {% set latest_weight = user.weight_logs|sort(attribute='date',
+      reverse=true)|first %}
+      <p class="stat-number accent">
+        {{ latest_weight.weight_kg if latest_weight else '—' }} kg
+      </p>
+    </div>
+    <div class="stat-card">
+      <h3>Workouts</h3>
+      <p class="stat-number accent">{{ user.workouts|length }}</p>
+    </div>
+  </div>
+
+  <div class="quick-actions">
+    <a
+      href="{{ url_for('main.log_workout') }}"
+      class="btn-action"
+      style="background: var(--accent)"
+      >🏋️ Log Workout</a
+    >
+    <a
+      href="{{ url_for('main.log_weight') }}"
+      class="btn-action"
+      style="background: #10b981"
+      >⚖️ Log Weight</a
+    >
+    <a
+      href="{{ url_for('main.weight_history') }}"
+      class="btn-action"
+      style="background: #3b82f6"
+      >📊 Weight History</a
+    >
+    <a href="#" class="btn-action" style="background: #8b5cf6">🎯 Goals</a>
+  </div>
 </div>
 {% endblock %}

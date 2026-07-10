@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Weight History - Grit{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>📊 Weight History</h1>
+        <div class="dashboard-actions">
+            <a href="{{ url_for('main.log_weight') }}" class="btn-primary" style="width: auto;">+ Log Weight</a>
+            <a href="{{ url_for('main.dashboard') }}" class="btn-secondary">Back</a>
+        </div>
+    </div>
+
+    {% if logs %}
+        <!-- Chart -->
+        <div class="form-card" style="margin-bottom: 1.5rem;">
+            <h2>Progress Chart</h2>
+            <div style="position: relative; height: 300px; width: 100%;">
+                <canvas id="weightChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="form-card">
+            <h2>All Entries</h2>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #e2e8f0;">
+                            <th style="text-align: left; padding: 0.75rem 0.5rem; color: #94a3b8; font-weight: 600; font-size: 0.8rem; text-transform: uppercase;">Date</th>
+                            <th style="text-align: left; padding: 0.75rem 0.5rem; color: #94a3b8; font-weight: 600; font-size: 0.8rem; text-transform: uppercase;">Weight</th>
+                            <th style="text-align: left; padding: 0.75rem 0.5rem; color: #94a3b8; font-weight: 600; font-size: 0.8rem; text-transform: uppercase;">Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs|sort(attribute='date', reverse=true) %}
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 0.6rem 0.5rem;">{{ log.date.strftime('%B %d, %Y') }}</td>
+                            <td style="padding: 0.6rem 0.5rem; font-weight: 600; color: #dc2626;">{{ log.weight_kg }} kg</td>
+                            <td style="padding: 0.6rem 0.5rem; color: #475569;">{{ log.notes or '—' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="icon">⚖️</div>
+            <h2>No weight entries yet</h2>
+            <p>Start tracking your weight to see your progress!</p>
+            <a href="{{ url_for('main.log_weight') }}" class="btn-primary" style="width: auto; display: inline-block;">Log Your First Weight</a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+{% if logs %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/api/weight-data')
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('weightChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.dates,
+                    datasets: [{
+                        label: 'Weight (kg)',
+                        data: data.weights,
+                        borderColor: '#dc2626',
+                        backgroundColor: 'rgba(220, 38, 38, 0.05)',
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: '#dc2626',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y + ' kg';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value + ' kg';
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        });
+});
+</script>
+{% endif %}
+
+{% endblock %}

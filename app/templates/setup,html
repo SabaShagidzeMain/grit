@@ -6,7 +6,7 @@
 <div class="auth-container">
     <div class="auth-box">
         <h1>Welcome! 👋</h1>
-        <p class="subtitle">Let's set up your profile to get started</p>
+        <p class="subtitle">Let's set up your profile</p>
         
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -32,7 +32,7 @@
                 <input type="number" id="goal_weight" name="goal_weight" step="0.1" required placeholder="e.g., 70.0">
             </div>
             
-            <div style="margin-bottom: 1rem; font-size: 0.875rem; color: #666; background: #FEF3C7; padding: 0.75rem; border-radius: 0.375rem;">
+            <div style="margin-bottom: 1.25rem; font-size: 0.85rem; color: var(--text-secondary); background: var(--bg-body); padding: 0.75rem 1rem; border-radius: var(--radius-sm); border-left: 3px solid var(--accent);">
                 💡 A realistic goal is typically 5-15% of your current weight
             </div>
             
@@ -40,7 +40,7 @@
         </form>
         
         <form method="POST" action="{{ url_for('main.setup') }}" style="margin-top: 0.75rem;">
-            <button type="submit" name="skip" value="true" style="background: none; border: none; color: #666; text-decoration: underline; cursor: pointer; font-size: 0.875rem; width: 100%;">
+            <button type="submit" name="skip" value="true" style="background: none; border: none; color: var(--text-muted); text-decoration: underline; cursor: pointer; font-size: 0.85rem; width: 100%; font-family: var(--font);">
                 Skip for now
             </button>
         </form>

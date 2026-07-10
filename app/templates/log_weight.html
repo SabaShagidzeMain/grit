@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Log Weight - Grit{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>⚖️ Log Weight</h1>
+        <a href="{{ url_for('main.dashboard') }}" class="btn-secondary">Back to Dashboard</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="form-card">
+        <h2>Record Your Weight</h2>
+        <form method="POST" action="{{ url_for('main.log_weight') }}">
+            <div class="form-group">
+                <label for="weight">Weight (kg)</label>
+                <input type="number" id="weight" name="weight" step="0.1" placeholder="e.g., 75.5" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="notes">Notes</label>
+                <textarea id="notes" name="notes" rows="2" placeholder="e.g., Morning weigh-in, after workout..."></textarea>
+            </div>
+            
+            <button type="submit" class="btn-primary">Log Weight ⚖️</button>
+        </form>
+    </div>
+
+    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+        <a href="{{ url_for('main.weight_history') }}" class="btn-secondary">📊 View History</a>
+        <a href="{{ url_for('main.dashboard') }}" class="btn-secondary">← Back</a>
+    </div>
+</div>
+{% endblock %}
