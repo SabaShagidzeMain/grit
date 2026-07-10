@@ -105,3 +105,46 @@
     color: var(--text-secondary);
     margin-bottom: 1rem;
 }
+
+/* ===== RECENT WORKOUTS - FIXED HEIGHT + SCROLLABLE ===== */
+.recent-workouts {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 1rem 1.25rem;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+}
+
+.workout-scroll-container {
+    flex: 1;
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+/* Custom scrollbar styling */
+.workout-scroll-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+.workout-scroll-container::-webkit-scrollbar-track {
+    background: var(--bg-body);
+    border-radius: 999px;
+}
+
+.workout-scroll-container::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 999px;
+}
+
+.workout-scroll-container::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* Firefox scrollbar */
+.workout-scroll-container {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) var(--bg-body);
+}

@@ -7,14 +7,22 @@ import requests
 
 bp = Blueprint('main', __name__)
 
+# ============================================
+# HELPERS
+# ============================================
+
 def user_has_setup(user):
     """Check if user has completed profile setup"""
     return user.height_cm is not None and user.goal_weight is not None
 
-
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+
+# ============================================
+# AUTH ROUTES
+# ============================================
 
 @bp.route('/')
 def index():
@@ -23,14 +31,6 @@ def index():
             return redirect(url_for('main.setup'))
         return redirect(url_for('main.dashboard'))
     return redirect(url_for('main.login'))
-
-@bp.route('/dashboard')
-@login_required
-def dashboard():
-    if not user_has_setup(current_user):
-        return redirect(url_for('main.setup'))
-    return render_template('dashboard.html', user=current_user)
-
 
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -46,7 +46,6 @@ def login():
         if user and user.check_password(password):
             login_user(user)
             flash('Logged in successfully!', 'success')
-            # Check if user needs setup
             if not user_has_setup(user):
                 return redirect(url_for('main.setup'))
             return redirect(url_for('main.dashboard'))
@@ -66,7 +65,6 @@ def register():
         password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
         
-        # Validation
         if not username or not email or not password:
             flash('All fields are required', 'danger')
             return render_template('register.html')
@@ -83,11 +81,7 @@ def register():
             flash('Email already registered', 'danger')
             return render_template('register.html')
         
-        # Create user
-        user = User(
-            username=username,
-            email=email
-        )
+        user = User(username=username, email=email)
         user.set_password(password)
         db.session.add(user)
         db.session.commit()
@@ -97,10 +91,21 @@ def register():
     
     return render_template('register.html')
 
+@bp.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('You have been logged out', 'info')
+    return redirect(url_for('main.login'))
+
+
+# ============================================
+# SETUP
+# ============================================
+
 @bp.route('/setup', methods=['GET', 'POST'])
 @login_required
 def setup():
-    # If user already has setup, redirect to dashboard
     if user_has_setup(current_user):
         return redirect(url_for('main.dashboard'))
     
@@ -122,11 +127,9 @@ def setup():
             height = float(height)
             goal_weight = float(goal_weight)
             
-            # Save user data
             current_user.height_cm = height
             current_user.goal_weight = goal_weight
             
-            # Save initial weight log
             weight_log = WeightLog(
                 user_id=current_user.id,
                 weight_kg=weight,
@@ -144,28 +147,41 @@ def setup():
     
     return render_template('setup.html')
 
+
+# ============================================
+# DASHBOARD
+# ============================================
+
+@bp.route('/dashboard')
+@login_required
+def dashboard():
+    if not user_has_setup(current_user):
+        return redirect(url_for('main.setup'))
+    return render_template('dashboard.html', user=current_user)
+
+
+# ============================================
+# WORKOUT LOGGING
+# ============================================
+
 @bp.route('/log-workout', methods=['GET', 'POST'])
 @login_required
 def log_workout():
     if request.method == 'POST':
         try:
-            # Get form data
             date = request.form.get('date')
             duration_min = request.form.get('duration_min')
             notes = request.form.get('notes', '')
             
-            # Get exercise data from form
             exercise_names = request.form.getlist('exercise_name[]')
             sets_list = request.form.getlist('sets[]')
             reps_list = request.form.getlist('reps[]')
             weights_list = request.form.getlist('weight[]')
             
-            # Validate
             if not exercise_names or len(exercise_names) == 0:
                 flash('Please add at least one exercise', 'danger')
                 return render_template('log_workout.html')
             
-            # Create workout
             workout = Workout(
                 user_id=current_user.id,
                 date=datetime.strptime(date, '%Y-%m-%d') if date else datetime.now(),
@@ -175,13 +191,11 @@ def log_workout():
             db.session.add(workout)
             db.session.flush()
             
-            # Add sets
             for i in range(len(exercise_names)):
                 exercise_name = exercise_names[i].strip()
                 if not exercise_name:
                     continue
                 
-                # Find or create exercise
                 exercise = Exercise.query.filter_by(name=exercise_name).first()
                 if not exercise:
                     exercise = Exercise(
@@ -210,7 +224,6 @@ def log_workout():
             flash(f'Error: {str(e)}', 'danger')
             return render_template('log_workout.html')
     
-    # Pass today's date and plans to the template
     today = datetime.now().strftime('%Y-%m-%d')
     plans = WorkoutPlan.query.filter_by(user_id=current_user.id).all()
     return render_template('log_workout.html', today=today, plans=plans)
@@ -221,71 +234,38 @@ def workout_history():
     workouts = Workout.query.filter_by(user_id=current_user.id).order_by(Workout.date.desc()).all()
     return render_template('workout_history.html', workouts=workouts)
 
-@bp.route('/api/exercises/search')
-def search_exercises():
-    """Search exercises from wger API - only return exercises with images"""
-    query = request.args.get('q', '').strip()
+@bp.route('/workout/<int:workout_id>/delete', methods=['POST'])
+@login_required
+def delete_workout(workout_id):
+    workout = Workout.query.filter_by(id=workout_id, user_id=current_user.id).first_or_404()
+    WorkoutSet.query.filter_by(workout_id=workout.id).delete()
+    db.session.delete(workout)
+    db.session.commit()
+    flash('Workout deleted successfully', 'info')
+    return redirect(url_for('main.workout_history'))
+
+@bp.route('/workout-set/<int:set_id>/delete', methods=['POST'])
+@login_required
+def delete_workout_set(set_id):
+    workout_set = WorkoutSet.query.get(set_id)
+    if not workout_set:
+        flash('Set not found', 'danger')
+        return redirect(url_for('main.workout_history'))
     
-    if not query or len(query) < 2:
-        return jsonify([])
+    workout = Workout.query.get(workout_set.workout_id)
+    if not workout or workout.user_id != current_user.id:
+        flash('Unauthorized', 'danger')
+        return redirect(url_for('main.workout_history'))
     
-    try:
-        url = f'https://wger.de/api/v2/exerciseinfo/?format=json&language=2&limit=1000'
-        response = requests.get(url, timeout=15)
-        
-        if response.status_code == 200:
-            data = response.json()
-            results = []
-            
-            for ex in data.get('results', []):
-                # Check if exercise has images FIRST
-                images = ex.get('images', [])
-                if not images:
-                    continue  # Skip exercises without images
-                
-                # Get English name from translations
-                name = None
-                for t in ex.get('translations', []):
-                    if t.get('language') == 2:  # English
-                        name = t.get('name')
-                        break
-                
-                if not name:
-                    continue
-                
-                if query.lower() in name.lower():
-                    # Get image
-                    image_url = None
-                    thumbnail_url = None
-                    
-                    for img in images:
-                        if img.get('is_main'):
-                            image_url = img.get('image')
-                            thumbnails = img.get('thumbnails', {})
-                            thumbnail_url = thumbnails.get('small') or thumbnails.get('medium')
-                            break
-                    
-                    # If no main image, use first available
-                    if not image_url and images:
-                        image_url = images[0].get('image')
-                        thumbnails = images[0].get('thumbnails', {})
-                        thumbnail_url = thumbnails.get('small') or thumbnails.get('medium')
-                    
-                    results.append({
-                        'id': ex.get('id'),
-                        'name': name,
-                        'muscle_group': 'Various',
-                        'image': image_url,
-                        'thumbnail': thumbnail_url
-                    })
-            
-            return jsonify(results[:20])
-        
-        return jsonify([])
-        
-    except Exception as e:
-        print(f"Exercise search error: {str(e)}")
-        return jsonify([])
+    db.session.delete(workout_set)
+    db.session.commit()
+    flash('Exercise set deleted', 'info')
+    return redirect(url_for('main.workout_history'))
+
+
+# ============================================
+# WEIGHT LOGGING
+# ============================================
 
 @bp.route('/log-weight', methods=['GET', 'POST'])
 @login_required
@@ -327,25 +307,19 @@ def weight_history():
     logs = WeightLog.query.filter_by(user_id=current_user.id).order_by(WeightLog.date.asc()).all()
     return render_template('weight_history.html', logs=logs)
 
-@bp.route('/api/weight-data')
+@bp.route('/weight/<int:log_id>/delete', methods=['POST'])
 @login_required
-def weight_data():
-    """Return weight data as JSON for charts"""
-    logs = WeightLog.query.filter_by(user_id=current_user.id).order_by(WeightLog.date.asc()).all()
-    
-    data = {
-        'dates': [log.date.strftime('%Y-%m-%d') for log in logs],
-        'weights': [log.weight_kg for log in logs],
-        'goal': current_user.goal_weight
-    }
-    return jsonify(data)
+def delete_weight(log_id):
+    log = WeightLog.query.filter_by(id=log_id, user_id=current_user.id).first_or_404()
+    db.session.delete(log)
+    db.session.commit()
+    flash('Weight entry deleted', 'info')
+    return redirect(url_for('main.weight_history'))
 
-@bp.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    flash('You have been logged out', 'info')
-    return redirect(url_for('main.login'))
+
+# ============================================
+# WORKOUT PLANS
+# ============================================
 
 @bp.route('/plans')
 @login_required
@@ -372,7 +346,6 @@ def create_plan():
         db.session.add(plan)
         db.session.flush()
         
-        # Get exercise data
         exercise_names = request.form.getlist('exercise_name[]')
         sets_list = request.form.getlist('sets[]')
         reps_list = request.form.getlist('reps[]')
@@ -427,7 +400,6 @@ def log_plan_workout(plan_id):
         duration_min = request.form.get('duration_min')
         notes = request.form.get('notes', '')
         
-        # Create workout
         workout = Workout(
             user_id=current_user.id,
             date=datetime.strptime(date, '%Y-%m-%d') if date else datetime.now(),
@@ -437,7 +409,6 @@ def log_plan_workout(plan_id):
         db.session.add(workout)
         db.session.flush()
         
-        # Get exercise data from form
         plan_exercise_ids = request.form.getlist('plan_exercise_id[]')
         actual_sets = request.form.getlist('actual_sets[]')
         actual_reps = request.form.getlist('actual_reps[]')
@@ -478,6 +449,86 @@ def delete_plan(plan_id):
     flash('Plan deleted', 'info')
     return redirect(url_for('main.plans'))
 
+
+# ============================================
+# API ENDPOINTS
+# ============================================
+
+@bp.route('/api/exercises/search')
+def search_exercises():
+    """Search exercises from wger API - only return exercises with images"""
+    query = request.args.get('q', '').strip()
+    
+    if not query or len(query) < 2:
+        return jsonify([])
+    
+    try:
+        url = f'https://wger.de/api/v2/exerciseinfo/?format=json&language=2&limit=1000'
+        response = requests.get(url, timeout=15)
+        
+        if response.status_code == 200:
+            data = response.json()
+            results = []
+            
+            for ex in data.get('results', []):
+                images = ex.get('images', [])
+                if not images:
+                    continue
+                
+                name = None
+                for t in ex.get('translations', []):
+                    if t.get('language') == 2:
+                        name = t.get('name')
+                        break
+                
+                if not name:
+                    continue
+                
+                if query.lower() in name.lower():
+                    image_url = None
+                    thumbnail_url = None
+                    
+                    for img in images:
+                        if img.get('is_main'):
+                            image_url = img.get('image')
+                            thumbnails = img.get('thumbnails', {})
+                            thumbnail_url = thumbnails.get('small') or thumbnails.get('medium')
+                            break
+                    
+                    if not image_url and images:
+                        image_url = images[0].get('image')
+                        thumbnails = images[0].get('thumbnails', {})
+                        thumbnail_url = thumbnails.get('small') or thumbnails.get('medium')
+                    
+                    results.append({
+                        'id': ex.get('id'),
+                        'name': name,
+                        'muscle_group': 'Various',
+                        'image': image_url,
+                        'thumbnail': thumbnail_url
+                    })
+            
+            return jsonify(results[:20])
+        
+        return jsonify([])
+        
+    except Exception as e:
+        print(f"Exercise search error: {str(e)}")
+        return jsonify([])
+
+@bp.route('/api/weight-data')
+@login_required
+def weight_data():
+    """Return weight data as JSON for charts"""
+    logs = WeightLog.query.filter_by(user_id=current_user.id).order_by(WeightLog.date.asc()).all()
+    
+    data = {
+        'dates': [log.date.strftime('%Y-%m-%d') for log in logs],
+        'weights': [log.weight_kg for log in logs],
+        'goal': current_user.goal_weight
+    }
+    return jsonify(data)
+
 @bp.route('/api/plan/<int:plan_id>/exercises')
 @login_required
 def get_plan_exercises(plan_id):
@@ -485,11 +536,9 @@ def get_plan_exercises(plan_id):
     plan = WorkoutPlan.query.filter_by(id=plan_id, user_id=current_user.id).first_or_404()
     
     exercises = []
-    # Order by the 'order' field
     plan_exercises = PlanExercise.query.filter_by(plan_id=plan.id).order_by(PlanExercise.order).all()
     
     for pe in plan_exercises:
-        # Make sure we have the exercise object
         exercise = Exercise.query.get(pe.exercise_id)
         if exercise:
             exercises.append({
@@ -500,7 +549,6 @@ def get_plan_exercises(plan_id):
                 'target_weight': pe.target_weight
             })
         else:
-            # Fallback if exercise not found
             exercises.append({
                 'id': pe.id,
                 'name': f"Exercise {pe.exercise_id}",
@@ -510,47 +558,3 @@ def get_plan_exercises(plan_id):
             })
     
     return jsonify({'exercises': exercises})
-
-@bp.route('/weight/<int:log_id>/delete', methods=['POST'])
-@login_required
-def delete_weight(log_id):
-    """Delete a weight entry"""
-    log = WeightLog.query.filter_by(id=log_id, user_id=current_user.id).first_or_404()
-    db.session.delete(log)
-    db.session.commit()
-    flash('Weight entry deleted', 'info')
-    return redirect(url_for('main.weight_history'))
-
-@bp.route('/workout-set/<int:set_id>/delete', methods=['POST'])
-@login_required
-def delete_workout_set(set_id):
-    """Delete a single exercise set from a workout"""
-    workout_set = WorkoutSet.query.get(set_id)
-    if not workout_set:
-        flash('Set not found', 'danger')
-        return redirect(url_for('main.workout_history'))
-    
-    # Check if the workout belongs to the current user
-    workout = Workout.query.get(workout_set.workout_id)
-    if not workout or workout.user_id != current_user.id:
-        flash('Unauthorized', 'danger')
-        return redirect(url_for('main.workout_history'))
-    
-    db.session.delete(workout_set)
-    db.session.commit()
-    flash('Exercise set deleted', 'info')
-    return redirect(url_for('main.workout_history'))
-
-@bp.route('/workout/<int:workout_id>/delete', methods=['POST'])
-@login_required
-def delete_workout(workout_id):
-    """Delete a workout and all its sets"""
-    workout = Workout.query.filter_by(id=workout_id, user_id=current_user.id).first_or_404()
-    
-    # Delete all workout sets first (cascade should handle this, but just in case)
-    WorkoutSet.query.filter_by(workout_id=workout.id).delete()
-    db.session.delete(workout)
-    db.session.commit()
-    
-    flash('Workout deleted successfully', 'info')
-    return redirect(url_for('main.workout_history'))

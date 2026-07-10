@@ -34,7 +34,7 @@
 
     <!-- Two Column Layout: Recent Workouts + Weight Chart -->
     <div class="dashboard-two-col">
-        <!-- Left: Recent Workouts -->
+        <!-- Left: Recent Workouts (Fixed Height + Scrollable) -->
         <div class="recent-workouts">
             <div class="section-header">
                 <h2>🏋️ Recent Workouts</h2>
@@ -43,36 +43,38 @@
                 {% endif %}
             </div>
 
-            {% if user.workouts|length > 0 %}
-                {% set recent_workouts = user.workouts|sort(attribute='date', reverse=true) %}
-                <div class="workout-list">
-                    {% for workout in recent_workouts[:3] %}
-                    <div class="workout-card-mini">
-                        <div class="workout-card-header">
-                            <span class="workout-date">{{ workout.date.strftime('%b %d, %Y') }}</span>
-                            <span class="workout-duration">{{ workout.duration_min or 0 }} min</span>
-                        </div>
-                        <div class="workout-exercise-list">
-                            {% for set in workout.sets[:3] %}
-                            <span class="exercise-tag">{{ set.exercise.name }}</span>
-                            {% endfor %}
-                            {% if workout.sets|length > 3 %}
-                            <span class="exercise-tag more">+{{ workout.sets|length - 3 }} more</span>
+            <div class="workout-scroll-container">
+                {% if user.workouts|length > 0 %}
+                    {% set recent_workouts = user.workouts|sort(attribute='date', reverse=true) %}
+                    <div class="workout-list">
+                        {% for workout in recent_workouts[:3] %}
+                        <div class="workout-card-mini">
+                            <div class="workout-card-header">
+                                <span class="workout-date">{{ workout.date.strftime('%b %d, %Y') }}</span>
+                                <span class="workout-duration">{{ workout.duration_min or 0 }} min</span>
+                            </div>
+                            <div class="workout-exercise-list">
+                                {% for set in workout.sets[:3] %}
+                                <span class="exercise-tag">{{ set.exercise.name }}</span>
+                                {% endfor %}
+                                {% if workout.sets|length > 3 %}
+                                <span class="exercise-tag more">+{{ workout.sets|length - 3 }} more</span>
+                                {% endif %}
+                            </div>
+                            {% if workout.notes %}
+                            <p class="workout-mini-notes">{{ workout.notes[:50] }}{% if workout.notes|length > 50 %}...{% endif %}</p>
                             {% endif %}
                         </div>
-                        {% if workout.notes %}
-                        <p class="workout-mini-notes">{{ workout.notes[:50] }}{% if workout.notes|length > 50 %}...{% endif %}</p>
-                        {% endif %}
+                        {% endfor %}
                     </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="empty-state-compact">
-                    <span class="empty-icon">🏋️</span>
-                    <p>No workouts yet</p>
-                    <a href="{{ url_for('main.log_workout') }}" class="btn-primary" style="width: auto; display: inline-block; font-size: 0.8rem; padding: 0.4rem 1rem;">Log One</a>
-                </div>
-            {% endif %}
+                {% else %}
+                    <div class="empty-state-compact">
+                        <span class="empty-icon">🏋️</span>
+                        <p>No workouts yet</p>
+                        <a href="{{ url_for('main.log_workout') }}" class="btn-primary" style="width: auto; display: inline-block; font-size: 0.8rem; padding: 0.4rem 1rem;">Log One</a>
+                    </div>
+                {% endif %}
+            </div>
         </div>
 
         <!-- Right: Weight Chart -->
