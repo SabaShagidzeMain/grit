@@ -19,6 +19,14 @@ def user_has_setup(user):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+def estimate_calories(duration_min, intensity='moderate'):
+    """Estimate calories burned based on duration and intensity"""
+    calories_per_min = {
+        'light': 4,
+        'moderate': 8,
+        'intense': 12
+    }
+    return duration_min * calories_per_min.get(intensity, 8)
 
 # ============================================
 # AUTH ROUTES
@@ -192,12 +200,18 @@ def dashboard():
         else:
             bmi_interpretation = "Obese"
     
+    # Get recent workouts with calories
+    recent_workouts = Workout.query.filter_by(user_id=current_user.id).order_by(Workout.date.desc()).limit(5).all()
+    for workout in recent_workouts:
+        workout.calories = estimate_calories(workout.duration_min or 0)
+    
     return render_template('dashboard.html', 
         user=current_user,
         latest_weight=latest_weight,
         streak=streak,
         bmi=bmi,
-        bmi_interpretation=bmi_interpretation
+        bmi_interpretation=bmi_interpretation,
+        recent_workouts=recent_workouts
     )
 
 
@@ -273,6 +287,11 @@ def log_workout():
 @login_required
 def workout_history():
     workouts = Workout.query.filter_by(user_id=current_user.id).order_by(Workout.date.desc()).all()
+    
+    # Add calorie estimates to each workout
+    for workout in workouts:
+        workout.calories = estimate_calories(workout.duration_min or 0)
+    
     return render_template('workout_history.html', workouts=workouts)
 
 @bp.route('/workout/<int:workout_id>/delete', methods=['POST'])

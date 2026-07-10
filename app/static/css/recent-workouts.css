@@ -1,150 +1,151 @@
 /* ===== RECENT WORKOUTS ===== */
 .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
 .section-header h2 {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .workout-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
 }
 
 .workout-card-mini {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1rem 1.25rem;
-    transition: var(--transition);
-    box-shadow: var(--shadow-sm);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
 }
 
 .workout-card-mini:hover {
-    border-color: var(--accent);
-    box-shadow: var(--shadow);
-    transform: translateY(-2px);
+  border-color: var(--accent);
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
 }
 
 .workout-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
 }
 
 .workout-date {
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary);
 }
 
 .workout-duration {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    background: var(--bg-body);
-    padding: 0.15rem 0.6rem;
-    border-radius: 999px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: var(--bg-body);
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
 }
 
 .workout-exercise-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem;
-    margin-bottom: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
 }
 
 .exercise-tag {
-    font-size: 0.75rem;
-    background: var(--bg-body);
-    color: var(--text-secondary);
-    padding: 0.15rem 0.6rem;
-    border-radius: 999px;
-    border: 1px solid var(--border);
+  font-size: 0.75rem;
+  background: var(--bg-body);
+  color: var(--text-secondary);
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
 }
 
 .exercise-tag.more {
-    background: var(--accent-light);
-    color: var(--accent);
-    border-color: #fca5a5;
+  background: var(--accent-light);
+  color: var(--accent);
+  border-color: #fca5a5;
 }
 
 .workout-mini-notes {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    margin: 0;
-    font-style: italic;
-    border-top: 1px solid var(--border);
-    padding-top: 0.5rem;
-    margin-top: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+  font-style: italic;
+  border-top: 1px solid var(--border);
+  padding-top: 0.5rem;
+  margin-top: 0.25rem;
 }
 
 /* ===== EMPTY WORKOUT STATE ===== */
 .empty-workout-state {
-    text-align: center;
-    padding: 3rem 2rem;
-    background: var(--bg-card);
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    border-style: dashed;
+  text-align: center;
+  padding: 3rem 2rem;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  border-style: dashed;
 }
 
 .empty-workout-state .empty-icon {
-    font-size: 2.5rem;
-    margin-bottom: 0.5rem;
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .empty-workout-state p {
-    color: var(--text-secondary);
-    margin-bottom: 1rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
 }
 
 /* ===== RECENT WORKOUTS - FIXED HEIGHT + SCROLLABLE ===== */
-.recent-workouts {
-    background: var(--bg-card);
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    padding: 1rem 1.25rem;
-    box-shadow: var(--shadow-sm);
-    display: flex;
-    flex-direction: column;
+.workout-calories {
+  font-size: 0.7rem;
+  color: var(--accent);
+  background: var(--accent-light);
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  font-weight: 600;
+  border: 1px solid rgba(220, 38, 38, 0.15);
+  white-space: nowrap;
 }
 
 .workout-scroll-container {
-    flex: 1;
-    max-height: 280px;
-    overflow-y: auto;
-    padding-right: 4px;
+  flex: 1;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 /* Custom scrollbar styling */
 .workout-scroll-container::-webkit-scrollbar {
-    width: 4px;
+  width: 4px;
 }
 
 .workout-scroll-container::-webkit-scrollbar-track {
-    background: var(--bg-body);
-    border-radius: 999px;
+  background: var(--bg-body);
+  border-radius: 999px;
 }
 
 .workout-scroll-container::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 999px;
+  background: var(--border);
+  border-radius: 999px;
 }
 
 .workout-scroll-container::-webkit-scrollbar-thumb:hover {
-    background: var(--text-muted);
+  background: var(--text-muted);
 }
 
 /* Firefox scrollbar */
 .workout-scroll-container {
-    scrollbar-width: thin;
-    scrollbar-color: var(--border) var(--bg-body);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) var(--bg-body);
 }

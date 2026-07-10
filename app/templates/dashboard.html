@@ -81,8 +81,7 @@ block content %}
       </div>
 
       <div class="workout-scroll-container">
-        {% if user.workouts|length > 0 %} {% set recent_workouts =
-        user.workouts|sort(attribute='date', reverse=true) %}
+        {% if recent_workouts|length > 0 %}
         <div class="workout-list">
           {% for workout in recent_workouts[:3] %}
           <div class="workout-card-mini">
@@ -90,9 +89,16 @@ block content %}
               <span class="workout-date"
                 >{{ workout.date.strftime('%b %d, %Y') }}</span
               >
-              <span class="workout-duration"
-                >{{ workout.duration_min or 0 }} min</span
-              >
+              <div style="display: flex; gap: 0.5rem; align-items: center">
+                <span class="workout-duration"
+                  >{{ workout.duration_min or 0 }} min</span
+                >
+                {% if workout.calories %}
+                <span class="workout-calories"
+                  >🔥 {{ workout.calories }} kcal</span
+                >
+                {% endif %}
+              </div>
             </div>
             <div class="workout-exercise-list">
               {% for set in workout.sets[:3] %}
