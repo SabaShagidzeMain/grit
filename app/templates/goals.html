@@ -1,0 +1,149 @@
+{% extends "base.html" %} {% block title %}Goals - Grit{% endblock %} {% block
+content %}
+<style>
+  .goal-progress-section {
+    margin-top: 1rem;
+  }
+  .goal-progress-text {
+    font-size: 0.85rem;
+    color: #475569;
+    margin-bottom: 0.5rem;
+  }
+  .goal-progress-bar {
+    height: 8px;
+    background: #f1f5f9;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .goal-progress-fill {
+    height: 100%;
+    background: #dc2626;
+    border-radius: 999px;
+    transition: width 0.5s ease;
+  }
+  .goal-progress-percent {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-top: 0.25rem;
+  }
+  .goal-empty-text {
+    color: #94a3b8;
+    font-size: 0.9rem;
+  }
+  .workout-progress-display {
+    padding: 0.65rem 1rem;
+    background: #f1f5f9;
+    border-radius: 8px;
+    font-weight: 600;
+    color: #0f172a;
+  }
+</style>
+
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <h1>🎯 Your Goals</h1>
+    <a href="{{ url_for('main.dashboard') }}" class="btn-secondary"
+      >Back to Dashboard</a
+    >
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %} {% if
+  messages %} {% for category, message in messages %}
+  <div class="flash flash-{{ category }}">{{ message }}</div>
+  {% endfor %} {% endif %} {% endwith %}
+
+  <form method="POST" action="{{ url_for('main.update_goals') }}">
+    <!-- Weight Goal -->
+    <div class="form-card">
+      <h2>⚖️ Weight Goal</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="weight_target">Target Weight (kg)</label>
+          <input
+            type="number"
+            id="weight_target"
+            name="weight_target"
+            step="0.1"
+            value="{{ weight_goal.target_value if weight_goal else '' }}"
+            placeholder="e.g., 70.0"
+          />
+        </div>
+        <div class="form-group">
+          <label for="target_date">Target Date</label>
+          <input
+            type="date"
+            id="target_date"
+            name="target_date"
+            value="{{ weight_goal.target_date if weight_goal and weight_goal.target_date else '' }}"
+          />
+        </div>
+      </div>
+
+      {% if weight_goal %} {% set latest_weight =
+      user.weight_logs|sort(attribute='date', reverse=true)|first %} {% set
+      progress = (latest_weight.weight_kg / weight_goal.target_value * 100) if
+      latest_weight and weight_goal.target_value else 0 %}
+      <div class="goal-progress-section">
+        <p class="goal-progress-text">
+          Current:
+          <strong
+            >{{ latest_weight.weight_kg if latest_weight else '—' }} kg</strong
+          >
+          | Target: <strong>{{ weight_goal.target_value }} kg</strong>
+        </p>
+        <div class="goal-progress-bar">
+          <div class="goal-progress-fill"></div>
+        </div>
+        <p class="goal-progress-percent">{{ (progress)|round(1) }}% complete</p>
+      </div>
+      {% else %}
+      <p class="goal-empty-text">No weight goal set. Enter a target above.</p>
+      {% endif %}
+    </div>
+
+    <!-- Workout Goal -->
+    <div class="form-card">
+      <h2>🏋️ Workout Goal</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="workout_target">Weekly Workout Goal</label>
+          <input
+            type="number"
+            id="workout_target"
+            name="workout_target"
+            step="1"
+            min="0"
+            value="{{ workout_goal.target_value if workout_goal else '' }}"
+            placeholder="e.g., 5"
+          />
+        </div>
+        <div class="form-group">
+          <label>Current Progress</label>
+          <p class="workout-progress-display">
+            {{ weekly_workouts }} / {{ workout_goal.target_value if workout_goal
+            else '0' }} this week
+          </p>
+        </div>
+      </div>
+
+      {% if workout_goal %} {% set progress = (weekly_workouts /
+      workout_goal.target_value * 100) if workout_goal.target_value else 0 %}
+      <div class="goal-progress-section">
+        <div class="goal-progress-bar">
+          <div class="goal-progress-fill"></div>
+        </div>
+        <p class="goal-progress-percent">
+          {{ (progress)|round(1) }}% complete this week
+        </p>
+      </div>
+      {% else %}
+      <p class="goal-empty-text">No workout goal set. Enter a target above.</p>
+      {% endif %}
+    </div>
+
+    <button type="submit" class="btn-primary btn-submit">
+      Update Goals 🎯
+    </button>
+  </form>
+</div>
+{% endblock %}

@@ -112,6 +112,20 @@
             <span class="nav-icon">📈</span>
             Weight History
           </a>
+          <a
+            href="{{ url_for('main.goals') }}"
+            class="nav-item {% if request.endpoint == 'main.goals' %}active{% endif %}"
+          >
+            <span class="nav-icon">🎯</span>
+            Goals
+          </a>
+          <a
+            href="{{ url_for('main.photos') }}"
+            class="nav-item {% if request.endpoint == 'main.photos' %}active{% endif %}"
+          >
+            <span class="nav-icon">📸</span>
+            Photos
+          </a>
         </nav>
 
         <div class="sidebar-footer">

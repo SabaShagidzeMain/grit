@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db, login_manager
-from app.models import User, WeightLog, Exercise, Workout, WorkoutSet, WorkoutPlan, PlanExercise
+from app.models import User, WeightLog, Exercise, Workout, WorkoutSet, WorkoutPlan, PlanExercise, Goal, ProgressPhoto
 from datetime import datetime, timedelta
 import requests
 
@@ -27,6 +27,13 @@ def estimate_calories(duration_min, intensity='moderate'):
         'intense': 12
     }
     return duration_min * calories_per_min.get(intensity, 8)
+
+def calculate_progress(current, target):
+    """Calculate progress percentage"""
+    if not current or not target or target == 0:
+        return 0
+    return min(100, round((current / target) * 100))
+
 
 # ============================================
 # AUTH ROUTES
@@ -205,7 +212,7 @@ def dashboard():
     for workout in recent_workouts:
         workout.calories = estimate_calories(workout.duration_min or 0)
     
-    # === WEEKLY SUMMARY ===
+    # Weekly summary
     week_end = datetime.now()
     week_start = week_end - timedelta(days=7)
     
@@ -219,8 +226,7 @@ def dashboard():
         Workout.date >= week_start
     ).scalar() or 0
     
-    weekly_calories = weekly_minutes * 8  # Average 8 kcal/min
-    
+    weekly_calories = weekly_minutes * 8
     weekly_avg_duration = round(weekly_minutes / weekly_workouts) if weekly_workouts > 0 else 0
     
     return render_template('dashboard.html', 
@@ -311,11 +317,8 @@ def log_workout():
 @login_required
 def workout_history():
     workouts = Workout.query.filter_by(user_id=current_user.id).order_by(Workout.date.desc()).all()
-    
-    # Add calorie estimates to each workout
     for workout in workouts:
         workout.calories = estimate_calories(workout.duration_min or 0)
-    
     return render_template('workout_history.html', workouts=workouts)
 
 @bp.route('/workout/<int:workout_id>/delete', methods=['POST'])
@@ -532,6 +535,190 @@ def delete_plan(plan_id):
     db.session.commit()
     flash('Plan deleted', 'info')
     return redirect(url_for('main.plans'))
+
+
+# ============================================
+# GOALS
+# ============================================
+
+@bp.route('/goals')
+@login_required
+def goals():
+    """View and manage goals"""
+    weight_goal = Goal.query.filter_by(
+        user_id=current_user.id,
+        type='weight',
+        is_achieved=False
+    ).first()
+    
+    workout_goal = Goal.query.filter_by(
+        user_id=current_user.id,
+        type='workouts',
+        is_achieved=False
+    ).first()
+    
+    # Calculate weekly workouts for the current week
+    week_start = datetime.now().date() - timedelta(days=datetime.now().weekday())
+    week_end = week_start + timedelta(days=6)
+    
+    weekly_workouts = Workout.query.filter(
+        Workout.user_id == current_user.id,
+        db.func.date(Workout.date) >= week_start,
+        db.func.date(Workout.date) <= week_end
+    ).count()
+    
+    return render_template('goals.html', 
+        user=current_user,
+        weight_goal=weight_goal,
+        workout_goal=workout_goal,
+        weekly_workouts=weekly_workouts
+    )
+
+@bp.route('/goals/update', methods=['POST'])
+@login_required
+def update_goals():
+    """Update or create goals"""
+    weight_target = request.form.get('weight_target')
+    workout_target = request.form.get('workout_target')
+    target_date = request.form.get('target_date')
+    
+    try:
+        # Update weight goal
+        if weight_target:
+            weight_goal = Goal.query.filter_by(
+                user_id=current_user.id,
+                type='weight',
+                is_achieved=False
+            ).first()
+            
+            if weight_goal:
+                weight_goal.target_value = float(weight_target)
+            else:
+                weight_goal = Goal(
+                    user_id=current_user.id,
+                    type='weight',
+                    target_value=float(weight_target),
+                    target_date=datetime.strptime(target_date, '%Y-%m-%d').date() if target_date else None,
+                    is_achieved=False
+                )
+                db.session.add(weight_goal)
+        
+        # Update workout goal
+        if workout_target:
+            workout_goal = Goal.query.filter_by(
+                user_id=current_user.id,
+                type='workouts',
+                is_achieved=False
+            ).first()
+            
+            if workout_goal:
+                workout_goal.target_value = float(workout_target)
+            else:
+                workout_goal = Goal(
+                    user_id=current_user.id,
+                    type='workouts',
+                    target_value=float(workout_target),
+                    target_date=datetime.strptime(target_date, '%Y-%m-%d').date() if target_date else None,
+                    is_achieved=False
+                )
+                db.session.add(workout_goal)
+        
+        db.session.commit()
+        flash('Goals updated successfully! 🎯', 'success')
+        return redirect(url_for('main.goals'))
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error: {str(e)}', 'danger')
+        return redirect(url_for('main.goals'))
+
+@bp.route('/api/goal-progress')
+@login_required
+def goal_progress():
+    """Return goal progress as JSON"""
+    weight_goal = Goal.query.filter_by(
+        user_id=current_user.id,
+        type='weight',
+        is_achieved=False
+    ).first()
+    
+    workout_goal = Goal.query.filter_by(
+        user_id=current_user.id,
+        type='workouts',
+        is_achieved=False
+    ).first()
+    
+    # Get latest weight
+    latest_weight = WeightLog.query.filter_by(user_id=current_user.id).order_by(WeightLog.date.desc()).first()
+    
+    # Get total workouts
+    total_workouts = Workout.query.filter_by(user_id=current_user.id).count()
+    
+    data = {
+        'weight': {
+            'target': weight_goal.target_value if weight_goal else None,
+            'current': latest_weight.weight_kg if latest_weight else None,
+            'progress': calculate_progress(latest_weight.weight_kg, weight_goal.target_value) if weight_goal and latest_weight else None
+        },
+        'workouts': {
+            'target': workout_goal.target_value if workout_goal else None,
+            'current': total_workouts,
+            'progress': calculate_progress(total_workouts, workout_goal.target_value) if workout_goal else None
+        }
+    }
+    return jsonify(data)
+
+
+# ============================================
+# PROGRESS PHOTOS
+# ============================================
+
+@bp.route('/photos')
+@login_required
+def photos():
+    """View progress photos"""
+    photos = ProgressPhoto.query.filter_by(user_id=current_user.id).order_by(ProgressPhoto.date.desc()).all()
+    today = datetime.now().strftime('%Y-%m-%d')
+    return render_template('photos.html', photos=photos, today=today)
+
+@bp.route('/photos/add', methods=['POST'])
+@login_required
+def add_photo():
+    """Add a progress photo URL"""
+    image_url = request.form.get('image_url')
+    caption = request.form.get('caption', '')
+    date = request.form.get('date')
+    
+    if not image_url:
+        flash('Please enter an image URL', 'danger')
+        return redirect(url_for('main.photos'))
+    
+    try:
+        photo = ProgressPhoto(
+            user_id=current_user.id,
+            image_url=image_url,
+            caption=caption,
+            date=datetime.strptime(date, '%Y-%m-%d').date() if date else datetime.now().date()
+        )
+        db.session.add(photo)
+        db.session.commit()
+        flash('Photo added successfully! 📸', 'success')
+        return redirect(url_for('main.photos'))
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error: {str(e)}', 'danger')
+        return redirect(url_for('main.photos'))
+
+@bp.route('/photos/<int:photo_id>/delete', methods=['POST'])
+@login_required
+def delete_photo(photo_id):
+    """Delete a progress photo"""
+    photo = ProgressPhoto.query.filter_by(id=photo_id, user_id=current_user.id).first_or_404()
+    db.session.delete(photo)
+    db.session.commit()
+    flash('Photo deleted', 'info')
+    return redirect(url_for('main.photos'))
 
 
 # ============================================

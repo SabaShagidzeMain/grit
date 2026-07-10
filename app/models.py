@@ -76,3 +76,21 @@ class PlanExercise(db.Model):
     order = db.Column(db.Integer, default=0)
     
     exercise = db.relationship('Exercise', backref='plan_exercises')
+    
+class Goal(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    type = db.Column(db.String(50))  # 'weight' or 'workouts'
+    target_value = db.Column(db.Float)  # target weight or target workout count
+    target_date = db.Column(db.Date)
+    is_achieved = db.Column(db.Boolean, default=False)
+    
+class ProgressPhoto(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    image_url = db.Column(db.String(500), nullable=False)
+    caption = db.Column(db.String(200))
+    date = db.Column(db.Date, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    user = db.relationship('User', backref='progress_photos')
