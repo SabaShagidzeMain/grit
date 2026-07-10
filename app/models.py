@@ -8,8 +8,8 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
-    height_cm = db.Column(db.Float)
-    goal_weight = db.Column(db.Float)
+    height_cm = db.Column(db.Float)  # Already here ✅
+    goal_weight = db.Column(db.Float)  # Already here ✅
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     def set_password(self, password):
@@ -17,3 +17,12 @@ class User(UserMixin, db.Model):
     
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+    
+class WeightLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    weight_kg = db.Column(db.Float, nullable=False)
+    date = db.Column(db.Date, default=datetime.utcnow)
+    notes = db.Column(db.String(200))
+    
+    user = db.relationship('User', backref='weight_logs')

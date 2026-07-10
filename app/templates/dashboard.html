@@ -9,8 +9,24 @@
         <a href="{{ url_for('main.logout') }}" class="btn-logout">Logout</a>
     </div>
     
-    <div class="dashboard-content">
-        <p>Your fitness dashboard is ready!</p>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Height</h3>
+            <p class="stat-number">{{ user.height_cm if user.height_cm else 'Not set' }} cm</p>
+        </div>
+        <div class="stat-card">
+            <h3>Goal Weight</h3>
+            <p class="stat-number">{{ user.goal_weight if user.goal_weight else 'Not set' }} kg</p>
+        </div>
+        <div class="stat-card">
+            <h3>Current Weight</h3>
+            {% set latest_weight = user.weight_logs|sort(attribute='date', reverse=true)|first %}
+            <p class="stat-number">{{ latest_weight.weight_kg if latest_weight else 'Not logged' }} kg</p>
+        </div>
+        <div class="stat-card">
+            <h3>Workouts</h3>
+            <p class="stat-number">0</p>
+        </div>
     </div>
 </div>
 {% endblock %}
