@@ -53,3 +53,26 @@ class WorkoutSet(db.Model):
     weight_kg = db.Column(db.Float)
     
     exercise = db.relationship('Exercise', backref='workout_sets')
+    
+class WorkoutPlan(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.String(200))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_active = db.Column(db.Boolean, default=True)
+    
+    user = db.relationship('User', backref='workout_plans')
+    exercises = db.relationship('PlanExercise', backref='plan', lazy=True, cascade='all, delete-orphan')
+
+class PlanExercise(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    plan_id = db.Column(db.Integer, db.ForeignKey('workout_plan.id'), nullable=False)
+    exercise_id = db.Column(db.Integer, db.ForeignKey('exercise.id'), nullable=False)
+    day_of_week = db.Column(db.Integer)  # 0=Monday, 6=Sunday
+    sets = db.Column(db.Integer, default=3)
+    reps = db.Column(db.Integer, default=10)
+    target_weight = db.Column(db.Float)  # Suggested weight
+    order = db.Column(db.Integer, default=0)
+    
+    exercise = db.relationship('Exercise', backref='plan_exercises')

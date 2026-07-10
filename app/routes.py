@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db, login_manager
-from app.models import User, WeightLog, Exercise, Workout, WorkoutSet
+from app.models import User, WeightLog, Exercise, Workout, WorkoutSet, WorkoutPlan, PlanExercise
 from datetime import datetime
 import requests
 
@@ -214,12 +214,12 @@ def log_workout():
     today = datetime.now().strftime('%Y-%m-%d')
     return render_template('log_workout.html', today=today)
 
-
 @bp.route('/workout-history')
 @login_required
 def workout_history():
     workouts = Workout.query.filter_by(user_id=current_user.id).order_by(Workout.date.desc()).all()
     return render_template('workout_history.html', workouts=workouts)
+
 @bp.route('/api/exercises/search')
 def search_exercises():
     """Search exercises from wger API - only return exercises with images"""
@@ -285,7 +285,7 @@ def search_exercises():
     except Exception as e:
         print(f"Exercise search error: {str(e)}")
         return jsonify([])
-    
+
 @bp.route('/log-weight', methods=['GET', 'POST'])
 @login_required
 def log_weight():
@@ -345,3 +345,134 @@ def logout():
     logout_user()
     flash('You have been logged out', 'info')
     return redirect(url_for('main.login'))
+
+@bp.route('/plans')
+@login_required
+def plans():
+    plans = WorkoutPlan.query.filter_by(user_id=current_user.id).all()
+    return render_template('plans.html', plans=plans)
+
+@bp.route('/plans/create', methods=['GET', 'POST'])
+@login_required
+def create_plan():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        description = request.form.get('description', '')
+        
+        if not name:
+            flash('Plan name is required', 'danger')
+            return render_template('create_plan.html')
+        
+        plan = WorkoutPlan(
+            user_id=current_user.id,
+            name=name,
+            description=description
+        )
+        db.session.add(plan)
+        db.session.flush()
+        
+        # Get exercise data
+        exercise_names = request.form.getlist('exercise_name[]')
+        sets_list = request.form.getlist('sets[]')
+        reps_list = request.form.getlist('reps[]')
+        weights_list = request.form.getlist('target_weight[]')
+        days_list = request.form.getlist('day_of_week[]')
+        
+        for i in range(len(exercise_names)):
+            if not exercise_names[i].strip():
+                continue
+            
+            exercise = Exercise.query.filter_by(name=exercise_names[i].strip()).first()
+            if not exercise:
+                exercise = Exercise(
+                    name=exercise_names[i].strip(),
+                    muscle_group='Unknown',
+                    category='Unknown'
+                )
+                db.session.add(exercise)
+                db.session.flush()
+            
+            plan_exercise = PlanExercise(
+                plan_id=plan.id,
+                exercise_id=exercise.id,
+                sets=int(sets_list[i]) if sets_list and i < len(sets_list) and sets_list[i] else 3,
+                reps=int(reps_list[i]) if reps_list and i < len(reps_list) and reps_list[i] else 10,
+                target_weight=float(weights_list[i]) if weights_list and i < len(weights_list) and weights_list[i] else None,
+                day_of_week=int(days_list[i]) if days_list and i < len(days_list) and days_list[i] else None,
+                order=i
+            )
+            db.session.add(plan_exercise)
+        
+        db.session.commit()
+        flash('Workout plan created successfully! 💪', 'success')
+        return redirect(url_for('main.plans'))
+    
+    return render_template('create_plan.html')
+
+@bp.route('/plans/<int:plan_id>/start')
+@login_required
+def start_plan(plan_id):
+    plan = WorkoutPlan.query.filter_by(id=plan_id, user_id=current_user.id).first_or_404()
+    today = datetime.now().strftime('%Y-%m-%d')
+    return render_template('log_plan_workout.html', plan=plan, today=today)
+
+@bp.route('/plans/<int:plan_id>/log', methods=['POST'])
+@login_required
+def log_plan_workout(plan_id):
+    plan = WorkoutPlan.query.filter_by(id=plan_id, user_id=current_user.id).first_or_404()
+    
+    try:
+        date = request.form.get('date')
+        duration_min = request.form.get('duration_min')
+        notes = request.form.get('notes', '')
+        
+        # Create workout
+        workout = Workout(
+            user_id=current_user.id,
+            date=datetime.strptime(date, '%Y-%m-%d') if date else datetime.now(),
+            duration_min=int(duration_min) if duration_min else 0,
+            notes=notes
+        )
+        db.session.add(workout)
+        db.session.flush()
+        
+        # Get exercise data from form
+        plan_exercise_ids = request.form.getlist('plan_exercise_id[]')
+        actual_sets = request.form.getlist('actual_sets[]')
+        actual_reps = request.form.getlist('actual_reps[]')
+        actual_weights = request.form.getlist('actual_weight[]')
+        
+        for i in range(len(plan_exercise_ids)):
+            if not plan_exercise_ids[i]:
+                continue
+            
+            plan_exercise = PlanExercise.query.get(int(plan_exercise_ids[i]))
+            if not plan_exercise:
+                continue
+            
+            workout_set = WorkoutSet(
+                workout_id=workout.id,
+                exercise_id=plan_exercise.exercise_id,
+                sets=int(actual_sets[i]) if actual_sets and i < len(actual_sets) and actual_sets[i] else 3,
+                reps=int(actual_reps[i]) if actual_reps and i < len(actual_reps) and actual_reps[i] else 10,
+                weight_kg=float(actual_weights[i]) if actual_weights and i < len(actual_weights) and actual_weights[i] else 0
+            )
+            db.session.add(workout_set)
+        
+        db.session.commit()
+        flash('Workout logged successfully! 💪', 'success')
+        return redirect(url_for('main.workout_history'))
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error: {str(e)}', 'danger')
+        return redirect(url_for('main.start_plan', plan_id=plan_id))
+
+@bp.route('/plans/<int:plan_id>/delete', methods=['POST'])
+@login_required
+def delete_plan(plan_id):
+    plan = WorkoutPlan.query.filter_by(id=plan_id, user_id=current_user.id).first_or_404()
+    db.session.delete(plan)
+    db.session.commit()
+    flash('Plan deleted', 'info')
+    return redirect(url_for('main.plans'))
