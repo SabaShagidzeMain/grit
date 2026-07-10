@@ -10,7 +10,53 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    {% block content %}{% endblock %}
+    <div class="app-layout">
+        <!-- Sidebar -->
+        {% if current_user.is_authenticated %}
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <h2>Grit</h2>
+                <p class="brand-sub">Fitness Tracker</p>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('main.dashboard') }}" class="nav-item {% if request.endpoint == 'main.dashboard' %}active{% endif %}">
+                    <span class="nav-icon">📊</span>
+                    Dashboard
+                </a>
+                <a href="{{ url_for('main.log_workout') }}" class="nav-item {% if request.endpoint == 'main.log_workout' %}active{% endif %}">
+                    <span class="nav-icon">🏋️</span>
+                    Log Workout
+                </a>
+                <a href="{{ url_for('main.log_weight') }}" class="nav-item {% if request.endpoint == 'main.log_weight' %}active{% endif %}">
+                    <span class="nav-icon">⚖️</span>
+                    Log Weight
+                </a>
+                <a href="{{ url_for('main.workout_history') }}" class="nav-item {% if request.endpoint == 'main.workout_history' %}active{% endif %}">
+                    <span class="nav-icon">📋</span>
+                    Workout History
+                </a>
+                <a href="{{ url_for('main.weight_history') }}" class="nav-item {% if request.endpoint == 'main.weight_history' %}active{% endif %}">
+                    <span class="nav-icon">📈</span>
+                    Weight History
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="{{ url_for('main.logout') }}" class="nav-item logout">
+                    <span class="nav-icon">🚪</span>
+                    Logout
+                </a>
+            </div>
+        </aside>
+        {% endif %}
+
+        <!-- Main Content -->
+        <main class="main-content {% if not current_user.is_authenticated %}full-width{% endif %}">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>

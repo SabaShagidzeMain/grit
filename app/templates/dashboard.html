@@ -1,63 +1,77 @@
-{% extends "base.html" %} {% block title %}Dashboard - Grit{% endblock %} {%
-block content %}
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Grit{% endblock %}
+
+{% block content %}
 <div class="dashboard-container">
-  <div class="dashboard-header">
-    <h1>👋 Welcome back, <span>{{ user.username }}</span></h1>
-    <div class="dashboard-actions">
-      <a href="{{ url_for('main.workout_history') }}" class="btn-secondary"
-        >📋 History</a
-      >
-      <a href="{{ url_for('main.logout') }}" class="btn-logout">Logout</a>
+    <div class="dashboard-header">
+        <h1>👋 Welcome back, <span>{{ user.username }}</span></h1>
+        <div class="dashboard-actions">
+            <a href="{{ url_for('main.workout_history') }}" class="btn-secondary">📋 All History</a>
+            <a href="{{ url_for('main.logout') }}" class="btn-logout">Logout</a>
+        </div>
     </div>
-  </div>
 
-  <div class="stats-grid">
-    <div class="stat-card">
-      <h3>Height</h3>
-      <p class="stat-number">
-        {{ user.height_cm if user.height_cm else '—' }} cm
-      </p>
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Height</h3>
+            <p class="stat-number">{{ user.height_cm if user.height_cm else '—' }} cm</p>
+        </div>
+        <div class="stat-card">
+            <h3>Goal Weight</h3>
+            <p class="stat-number">{{ user.goal_weight if user.goal_weight else '—' }} kg</p>
+        </div>
+        <div class="stat-card">
+            <h3>Current Weight</h3>
+            {% set latest_weight = user.weight_logs|sort(attribute='date', reverse=true)|first %}
+            <p class="stat-number accent">{{ latest_weight.weight_kg if latest_weight else '—' }} kg</p>
+        </div>
+        <div class="stat-card">
+            <h3>Workouts</h3>
+            <p class="stat-number accent">{{ user.workouts|length }}</p>
+        </div>
     </div>
-    <div class="stat-card">
-      <h3>Goal Weight</h3>
-      <p class="stat-number">
-        {{ user.goal_weight if user.goal_weight else '—' }} kg
-      </p>
-    </div>
-    <div class="stat-card">
-      <h3>Current Weight</h3>
-      {% set latest_weight = user.weight_logs|sort(attribute='date',
-      reverse=true)|first %}
-      <p class="stat-number accent">
-        {{ latest_weight.weight_kg if latest_weight else '—' }} kg
-      </p>
-    </div>
-    <div class="stat-card">
-      <h3>Workouts</h3>
-      <p class="stat-number accent">{{ user.workouts|length }}</p>
-    </div>
-  </div>
 
-  <div class="quick-actions">
-    <a
-      href="{{ url_for('main.log_workout') }}"
-      class="btn-action"
-      style="background: var(--accent)"
-      >🏋️ Log Workout</a
-    >
-    <a
-      href="{{ url_for('main.log_weight') }}"
-      class="btn-action"
-      style="background: #10b981"
-      >⚖️ Log Weight</a
-    >
-    <a
-      href="{{ url_for('main.weight_history') }}"
-      class="btn-action"
-      style="background: #3b82f6"
-      >📊 Weight History</a
-    >
-    <a href="#" class="btn-action" style="background: #8b5cf6">🎯 Goals</a>
-  </div>
+    <!-- Recent Workouts -->
+    <div class="recent-workouts">
+        <div class="section-header">
+            <h2>Recent Workouts</h2>
+            {% if user.workouts|length > 0 %}
+            <a href="{{ url_for('main.workout_history') }}" class="btn-secondary" style="font-size: 0.8rem;">View All →</a>
+            {% endif %}
+        </div>
+
+        {% if user.workouts|length > 0 %}
+            {% set recent_workouts = user.workouts|sort(attribute='date', reverse=true) %}
+            <div class="workout-grid">
+                {% for workout in recent_workouts[:5] %}
+                <div class="workout-card-mini">
+                    <div class="workout-card-header">
+                        <span class="workout-date">{{ workout.date.strftime('%b %d, %Y') }}</span>
+                        <span class="workout-duration">{{ workout.duration_min or 0 }} min</span>
+                    </div>
+                    <div class="workout-exercise-list">
+                        {% for set in workout.sets[:3] %}
+                        <span class="exercise-tag">{{ set.exercise.name }}</span>
+                        {% endfor %}
+                        {% if workout.sets|length > 3 %}
+                        <span class="exercise-tag more">+{{ workout.sets|length - 3 }} more</span>
+                        {% endif %}
+                    </div>
+                    {% if workout.notes %}
+                    <p class="workout-mini-notes">{{ workout.notes[:50] }}{% if workout.notes|length > 50 %}...{% endif %}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-workout-state">
+                <div class="empty-icon">🏋️</div>
+                <p>No workouts logged yet</p>
+                <a href="{{ url_for('main.log_workout') }}" class="btn-primary" style="width: auto; display: inline-block;">Log Your First Workout</a>
+            </div>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}
