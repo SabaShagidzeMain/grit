@@ -85,6 +85,13 @@
             Log Workout
           </a>
           <a
+            href="{{ url_for('main.plans') }}"
+            class="nav-item {% if request.endpoint == 'main.plans' or request.endpoint == 'main.create_plan' %}active{% endif %}"
+          >
+            <span class="nav-icon">📋</span>
+            Workout Plans
+          </a>
+          <a
             href="{{ url_for('main.log_weight') }}"
             class="nav-item {% if request.endpoint == 'main.log_weight' %}active{% endif %}"
           >

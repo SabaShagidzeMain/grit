@@ -69,3 +69,94 @@
     flex-shrink: 0;
     background: var(--bg-body);
 }
+
+/* ===== PLANS ===== */
+.plans-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.plan-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 1.25rem;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.plan-card:hover {
+    border-color: var(--accent);
+    box-shadow: var(--shadow);
+}
+
+.plan-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.plan-card-header h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.plan-exercise-count {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background: var(--bg-body);
+    padding: 0.1rem 0.6rem;
+    border-radius: 999px;
+}
+
+.plan-description {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+}
+
+.plan-exercises-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-bottom: 0.75rem;
+}
+
+.plan-exercise-tag {
+    font-size: 0.7rem;
+    background: var(--bg-body);
+    color: var(--text-secondary);
+    padding: 0.1rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+}
+
+.plan-exercise-tag.more {
+    background: var(--accent-light);
+    color: var(--accent);
+    border-color: #fca5a5;
+}
+
+.plan-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.plan-actions .btn-remove {
+    padding: 0.4rem 0.8rem;
+    height: auto;
+    width: auto;
+}
+
+/* ===== PLAN EXERCISE ROW ===== */
+.plan-exercise-row {
+    background: var(--bg-body);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.75rem;
+}

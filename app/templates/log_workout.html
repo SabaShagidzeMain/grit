@@ -17,6 +17,20 @@
         {% endif %}
     {% endwith %}
 
+    <!-- Select Plan -->
+    <div class="form-card">
+        <h2>Select Workout Plan</h2>
+        <div class="form-group">
+            <select id="plan-select" class="plan-select" style="width: 100%; padding: 0.65rem 1rem; background: var(--bg-body); border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 0.95rem; color: var(--text-primary);">
+                <option value="">-- Manual Entry --</option>
+                {% for plan in plans %}
+                <option value="{{ plan.id }}">{{ plan.name }} ({{ plan.exercises|length }} exercises)</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="button" id="load-plan-btn" class="btn-secondary" style="width: auto;">Load Plan</button>
+    </div>
+
     <form method="POST" action="{{ url_for('main.log_workout') }}" id="workout-form">
         <!-- Basic Info -->
         <div class="form-card">
@@ -100,12 +114,10 @@ function setupSearch(input) {
                 .then(data => {
                     if (data.length > 0) {
                         suggestions.innerHTML = data.map(ex => {
-                            // Build image HTML if thumbnail exists
                             let imgHtml = '';
                             if (ex.thumbnail) {
                                 imgHtml = `<img src="${ex.thumbnail}" alt="${ex.name}" class="suggestion-img">`;
                             }
-                            // Use data attribute instead of inline onclick
                             return `<div class="suggestion-item" data-name="${ex.name}">
                                 ${imgHtml}
                                 <span>${ex.name}</span>
@@ -113,7 +125,6 @@ function setupSearch(input) {
                         }).join('');
                         suggestions.style.display = 'block';
                         
-                        // Add click event listeners to suggestion items
                         suggestions.querySelectorAll('.suggestion-item').forEach(item => {
                             item.addEventListener('click', function(e) {
                                 const name = this.dataset.name;
@@ -164,5 +175,82 @@ function removeExercise(btn) {
         alert('You need at least one exercise!');
     }
 }
+
+// Load Plan Functionality
+document.getElementById('load-plan-btn').addEventListener('click', function() {
+    const planId = document.getElementById('plan-select').value;
+    if (!planId) {
+        alert('Please select a plan or use manual entry');
+        return;
+    }
+
+    fetch(`/api/plan/${planId}/exercises`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+
+            // Clear existing exercises
+            const container = document.getElementById('exercise-container');
+            container.innerHTML = '';
+            
+            // Add exercises from plan
+            data.exercises.forEach((ex, index) => {
+                const row = document.createElement('div');
+                row.className = 'exercise-row';
+                row.innerHTML = `
+                    <div class="exercise-inputs">
+                        <div class="form-group" style="flex: 2;">
+                            <label>Exercise</label>
+                            <input type="text" name="exercise_name[]" class="exercise-search" value="${ex.name}" readonly style="background: var(--bg-card); cursor: default;">
+                            <div class="suggestions"></div>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>Sets</label>
+                            <input type="number" name="sets[]" value="${ex.sets}" min="1">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>Reps</label>
+                            <input type="number" name="reps[]" value="${ex.reps}" min="1">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>Weight (kg)</label>
+                            <input type="number" name="weight[]" step="0.5" value="${ex.target_weight || ''}" min="0" placeholder="60">
+                        </div>
+                        <button type="button" class="btn-remove" onclick="removeExercise(this)">✕</button>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+
+            flash('Plan loaded successfully! 💪', 'success');
+        })
+        .catch(error => {
+            alert('Error loading plan');
+        });
+});
+
+// Flash message helper
+function flash(message, category) {
+    const container = document.querySelector('.dashboard-container');
+    const flashDiv = document.createElement('div');
+    flashDiv.className = `flash flash-${category}`;
+    flashDiv.textContent = message;
+    container.insertBefore(flashDiv, container.querySelector('form'));
+    setTimeout(() => flashDiv.remove(), 3000);
+}
 </script>
+
+<style>
+.plan-select {
+    cursor: pointer;
+}
+.plan-select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.06);
+}
+</style>
 {% endblock %}

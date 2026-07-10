@@ -210,9 +210,10 @@ def log_workout():
             flash(f'Error: {str(e)}', 'danger')
             return render_template('log_workout.html')
     
-    # Pass today's date to the template
+    # Pass today's date and plans to the template
     today = datetime.now().strftime('%Y-%m-%d')
-    return render_template('log_workout.html', today=today)
+    plans = WorkoutPlan.query.filter_by(user_id=current_user.id).all()
+    return render_template('log_workout.html', today=today, plans=plans)
 
 @bp.route('/workout-history')
 @login_required
@@ -476,3 +477,46 @@ def delete_plan(plan_id):
     db.session.commit()
     flash('Plan deleted', 'info')
     return redirect(url_for('main.plans'))
+
+@bp.route('/api/plan/<int:plan_id>/exercises')
+@login_required
+def get_plan_exercises(plan_id):
+    """Get exercises for a specific plan"""
+    plan = WorkoutPlan.query.filter_by(id=plan_id, user_id=current_user.id).first_or_404()
+    
+    exercises = []
+    # Order by the 'order' field
+    plan_exercises = PlanExercise.query.filter_by(plan_id=plan.id).order_by(PlanExercise.order).all()
+    
+    for pe in plan_exercises:
+        # Make sure we have the exercise object
+        exercise = Exercise.query.get(pe.exercise_id)
+        if exercise:
+            exercises.append({
+                'id': pe.id,
+                'name': exercise.name,
+                'sets': pe.sets,
+                'reps': pe.reps,
+                'target_weight': pe.target_weight
+            })
+        else:
+            # Fallback if exercise not found
+            exercises.append({
+                'id': pe.id,
+                'name': f"Exercise {pe.exercise_id}",
+                'sets': pe.sets,
+                'reps': pe.reps,
+                'target_weight': pe.target_weight
+            })
+    
+    return jsonify({'exercises': exercises})
+
+@bp.route('/weight/<int:log_id>/delete', methods=['POST'])
+@login_required
+def delete_weight(log_id):
+    """Delete a weight entry"""
+    log = WeightLog.query.filter_by(id=log_id, user_id=current_user.id).first_or_404()
+    db.session.delete(log)
+    db.session.commit()
+    flash('Weight entry deleted', 'info')
+    return redirect(url_for('main.weight_history'))
