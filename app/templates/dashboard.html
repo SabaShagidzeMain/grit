@@ -216,6 +216,47 @@ block content %}
       {% endif %}
     </div>
   </div>
+
+  <!-- Weekly Summary Row -->
+  <div class="weekly-summary">
+    <div class="section-header">
+      <h2>📊 Weekly Summary</h2>
+      <span class="week-range"
+        >{{ week_start.strftime('%b %d') }} – {{ week_end.strftime('%b %d, %Y')
+        }}</span
+      >
+    </div>
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="summary-icon">🏋️</div>
+        <div>
+          <p class="summary-label">Workouts</p>
+          <p class="summary-value">{{ weekly_workouts }}</p>
+        </div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-icon">⏱️</div>
+        <div>
+          <p class="summary-label">Total Minutes</p>
+          <p class="summary-value">{{ weekly_minutes }}</p>
+        </div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-icon">🔥</div>
+        <div>
+          <p class="summary-label">Calories Burned</p>
+          <p class="summary-value">{{ weekly_calories }}</p>
+        </div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-icon">📈</div>
+        <div>
+          <p class="summary-label">Avg. Duration</p>
+          <p class="summary-value">{{ weekly_avg_duration }} min</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Chart.js -->

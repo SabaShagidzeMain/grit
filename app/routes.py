@@ -205,13 +205,37 @@ def dashboard():
     for workout in recent_workouts:
         workout.calories = estimate_calories(workout.duration_min or 0)
     
+    # === WEEKLY SUMMARY ===
+    week_end = datetime.now()
+    week_start = week_end - timedelta(days=7)
+    
+    weekly_workouts = Workout.query.filter(
+        Workout.user_id == current_user.id,
+        Workout.date >= week_start
+    ).count()
+    
+    weekly_minutes = db.session.query(db.func.sum(Workout.duration_min)).filter(
+        Workout.user_id == current_user.id,
+        Workout.date >= week_start
+    ).scalar() or 0
+    
+    weekly_calories = weekly_minutes * 8  # Average 8 kcal/min
+    
+    weekly_avg_duration = round(weekly_minutes / weekly_workouts) if weekly_workouts > 0 else 0
+    
     return render_template('dashboard.html', 
         user=current_user,
         latest_weight=latest_weight,
         streak=streak,
         bmi=bmi,
         bmi_interpretation=bmi_interpretation,
-        recent_workouts=recent_workouts
+        recent_workouts=recent_workouts,
+        week_start=week_start,
+        week_end=week_end,
+        weekly_workouts=weekly_workouts,
+        weekly_minutes=weekly_minutes,
+        weekly_calories=weekly_calories,
+        weekly_avg_duration=weekly_avg_duration
     )
 
 
